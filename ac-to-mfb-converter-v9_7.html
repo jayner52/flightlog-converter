@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FlightLog Converter - Air Canada to MyFlightBook</title>
+    <meta name="description" content="Convert Air Canada PQRM logbook exports to MyFlightBook CSV format. Free, private, runs entirely in your browser.">
+    <meta property="og:title" content="FlightLog Converter">
+    <meta property="og:description" content="Convert Air Canada PQRM exports to MyFlightBook format. Free & private - all processing happens in your browser.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230a0f1a' width='100' height='100'/><text x='50' y='60' text-anchor='middle' font-size='50'>✈️</text></svg>">
+    <meta name="twitter:card" content="summary">
+    <meta name="theme-color" content="#0a0f1a">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23dc2626'><path d='M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z'/></svg>">
+    <style>
+        :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--hover:#1e293b;--red:#dc2626;--blue:#3b82f6;--green:#10b981;--yellow:#f59e0b;--purple:#8b5cf6;--orange:#f97316;--cyan:#06b6d4;--text:#f8fafc;--text2:#94a3b8;--muted:#64748b;--border:#2d3748}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+        .container{max-width:1800px;margin:0 auto;padding:.75rem}
+        header{text-align:center;margin-bottom:.75rem}
+        h1{font-size:1.4rem;background:linear-gradient(135deg,var(--text),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .subtitle{color:var(--text2);font-size:.8rem}
+        .steps{display:flex;justify-content:center;gap:0;margin:.75rem 0}
+        .step{display:flex;align-items:center;gap:.3rem;padding:.4rem .8rem;background:var(--card);border:1px solid var(--border);color:var(--muted);font-size:.75rem;font-weight:500}
+        .step:first-child{border-radius:6px 0 0 6px}.step:last-child{border-radius:0 6px 6px 0}
+        .step.active{background:var(--blue);border-color:var(--blue);color:#fff}
+        .step.completed{background:var(--green);border-color:var(--green);color:#fff}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem;margin-bottom:.75rem}
+        .card-header{display:flex;align-items:center;gap:.4rem;margin-bottom:.6rem;padding-bottom:.4rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .card-title{font-size:.9rem;font-weight:600}
+        .format-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+        .format-group{flex:1;min-width:180px}
+        .format-group label{display:block;font-size:.65rem;font-weight:500;color:var(--text2);margin-bottom:.2rem}
+        .format-group select{width:100%;padding:.4rem;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.8rem}
+        .mode-toggle{display:inline-flex;background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:2px;margin-bottom:.75rem}
+        .mode-toggle button{padding:.35rem .7rem;border:none;background:transparent;color:var(--muted);font-size:.75rem;font-weight:500;border-radius:3px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.25rem}
+        .mode-toggle button.active{background:var(--blue);color:#fff}
+        .mode-toggle button:hover:not(.active){color:var(--text)}
+        .upload-zone{border:2px dashed var(--border);border-radius:6px;padding:1.25rem;text-align:center;cursor:pointer;transition:.2s;background:rgba(59,130,246,.02)}
+        .upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:rgba(59,130,246,.05)}
+        .upload-zone.has-file{border-color:var(--green);background:rgba(16,185,129,.05)}
+        .upload-text{font-size:.8rem;color:var(--text2);margin-bottom:.15rem}.upload-hint{font-size:.65rem;color:var(--muted)}
+        .file-input{display:none}
+        .file-list{margin-top:.4rem;display:flex;flex-direction:column;gap:.2rem}
+        .file-item{display:flex;align-items:center;justify-content:space-between;padding:.25rem .4rem;background:var(--bg2);border-radius:3px;font-size:.65rem;color:var(--green)}
+        .file-item button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:0 .15rem}
+        .file-item button:hover{color:var(--red)}
+        .pilot-detection{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:4px;padding:.5rem;margin-top:.5rem;display:none}
+        .pilot-detection.visible{display:block}
+        .pilot-detection h4{color:var(--purple);font-size:.7rem;margin-bottom:.3rem}
+        .pilot-detection .detected-info{font-size:.6rem;color:var(--text2);margin-top:.2rem}
+        .pilot-detection input{width:160px;padding:.3rem .35rem;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:.7rem}
+        .instructions{background:var(--bg2);border-left:3px solid var(--yellow);border-radius:4px;padding:.4rem .5rem;margin-top:.5rem}
+        .instructions h4{color:var(--yellow);font-size:.65rem;margin-bottom:.15rem}
+        .instructions p{color:var(--text2);line-height:1.35;font-size:.6rem}
+        .settings-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;align-items:flex-end}
+        .setting-group{min-width:110px}
+        .setting-group.small{min-width:auto}
+        label{display:block;font-size:.6rem;font-weight:500;color:var(--text2);margin-bottom:.15rem}
+        input[type="text"],input[type="date"],input[type="number"],input[type="datetime-local"],select{width:100%;padding:.3rem .35rem;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:.7rem}
+        input:focus,select:focus{outline:none;border-color:var(--blue)}
+        .toggle-group{display:flex;align-items:center;gap:.25rem}
+        .toggle-label{font-size:.6rem;color:var(--text2)}
+        .toggle{width:28px;height:16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer;position:relative;transition:.2s}
+        .toggle.active{background:var(--blue);border-color:var(--blue)}
+        .toggle::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;background:#fff;border-radius:50%;transition:.2s}
+        .toggle.active::after{transform:translateX(12px)}
+        .btn{display:inline-flex;align-items:center;gap:.2rem;padding:.35rem .6rem;border-radius:4px;font-size:.7rem;font-weight:600;cursor:pointer;border:none;transition:.15s}
+        .btn-primary{background:var(--red);color:#fff}.btn-primary:hover:not(:disabled){background:#ef4444}
+        .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+        .btn-secondary{background:var(--bg2);color:var(--text);border:1px solid var(--border)}
+        .btn-secondary:hover{border-color:var(--blue)}
+        .btn-success{background:var(--green);color:#fff}
+        .btn-small{padding:.18rem .35rem;font-size:.6rem}
+        .btn-row{display:flex;gap:.35rem;margin-top:.5rem;flex-wrap:wrap}
+        .dropdown{position:relative;display:inline-block}
+        .dropdown-content{display:none;position:absolute;top:100%;left:0;background:var(--card);border:1px solid var(--border);border-radius:4px;min-width:140px;z-index:50;max-height:200px;overflow-y:auto;margin-top:2px}
+        .dropdown.open .dropdown-content{display:block}
+        .dropdown-item{padding:.3rem .5rem;font-size:.6rem;cursor:pointer;display:flex;align-items:center;gap:.3rem}
+        .dropdown-item:hover{background:var(--hover)}
+        .dropdown-item input{width:12px;height:12px}
+        .table-wrapper{position:relative;margin-top:.4rem;border:1px solid var(--border);border-radius:5px;overflow:hidden}
+        .table-scroll{max-height:380px;overflow:auto;-webkit-overflow-scrolling:touch}
+        table{width:100%;border-collapse:collapse;font-size:.65rem}
+        thead{position:sticky;top:0;z-index:20}
+        th{background:var(--bg2);padding:.3rem .2rem;text-align:left;font-weight:600;color:var(--text2);font-size:.55rem;border-bottom:2px solid var(--border);white-space:nowrap;position:relative}
+        th.center,td.center{text-align:center}
+        th.sticky-col,td.sticky-col{position:sticky;left:0;z-index:10;background:var(--bg2)}
+        td.sticky-col{background:var(--card)}
+        th .col-delete{display:none;position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:.5rem;padding:0 2px}
+        th:hover .col-delete{display:inline}
+        th .col-delete:hover{color:var(--red)}
+        td{padding:.25rem .2rem;border-bottom:1px solid var(--border);font-family:monospace;font-size:.6rem;white-space:nowrap}
+        tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+        tr:nth-child(even) td.sticky-col{background:var(--hover)}
+        tr:hover td{background:var(--hover)}
+        tr.duplicate td{background:rgba(249,115,22,.1)}
+        tr.time-error td{background:rgba(220,38,38,.12)}
+        tr.time-error td.time-cell{color:var(--red);font-weight:600}
+        tr.rounding-notice td.time-cell{color:var(--cyan)}
+        td.selected-cell{outline:2px solid var(--blue);outline-offset:-1px}
+        .cell-route{color:var(--blue);font-weight:500}
+        .cell-time{color:var(--green)}
+        .cell-pilot{color:var(--purple)}
+        .cell-model{color:var(--cyan)}
+        .editable{cursor:pointer;padding:.08rem .12rem;border-radius:2px;min-width:22px;display:inline-block}
+        .editable:hover{background:rgba(59,130,246,.12)}
+        .edit-input{width:100%;min-width:28px;padding:.08rem .15rem;background:var(--bg);border:1px solid var(--blue);border-radius:2px;color:var(--text);font-family:monospace;font-size:.6rem}
+        .edit-input[type="datetime-local"]{min-width:120px}
+        .edit-input[type="number"]{min-width:40px}
+        .edit-input[type="date"]{min-width:90px}
+        .flight-checkbox{width:14px;height:14px;accent-color:var(--blue);cursor:pointer}
+        .flight-checkbox:focus{outline:2px solid var(--blue);outline-offset:1px}
+        .role-toggle{display:inline-flex;background:var(--bg2);border-radius:3px;padding:1px}
+        .role-toggle button{padding:.08rem .2rem;border:none;background:transparent;color:var(--muted);font-size:.5rem;font-weight:600;border-radius:2px;cursor:pointer}
+        .role-toggle button.active{background:var(--blue);color:#fff}
+        .role-toggle button:focus{outline:2px solid var(--cyan);outline-offset:1px}
+        .delete-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:.08rem;font-size:.6rem}
+        .delete-btn:hover{color:var(--red)}
+        .badge{display:inline-block;padding:.02rem .15rem;border-radius:2px;font-size:.45rem;font-weight:600;margin-right:.12rem}
+        .dup-badge{background:rgba(249,115,22,.2);border:1px solid var(--orange);color:var(--orange)}
+        .err-badge{background:rgba(220,38,38,.2);border:1px solid var(--red);color:var(--red)}
+        .info-badge{background:rgba(6,182,212,.15);border:1px solid var(--cyan);color:var(--cyan)}
+        .unmapped-badge{background:rgba(139,92,246,.15);border:1px solid var(--purple);color:var(--purple);font-size:.4rem}
+        .stats-row{display:flex;gap:.25rem;flex-wrap:wrap;margin-top:.3rem;padding-top:.3rem;border-top:1px solid var(--border)}
+        .stat-box{background:var(--bg2);padding:.2rem .3rem;border-radius:3px;min-width:45px}
+        .stat-label{font-size:.45rem;color:var(--muted);text-transform:uppercase}
+        .stat-value{font-size:.7rem;font-weight:700;color:var(--blue);font-family:monospace}
+        .status{padding:.3rem;border-radius:4px;margin-top:.3rem;font-size:.65rem}
+        .status-error{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:#fca5a5}
+        .status-success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
+        .status-warning{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);color:#fdba74}
+        .toolbar{display:flex;gap:.2rem;flex-wrap:wrap;align-items:center;margin-bottom:.25rem}
+        .toolbar-sep{width:1px;height:14px;background:var(--border);margin:0 .06rem}
+        .shortcuts-help{font-size:.5rem;color:var(--muted);padding:.15rem .3rem;background:var(--bg2);border:1px solid var(--border);border-radius:3px;cursor:help;position:relative}
+        .shortcuts-help:hover .shortcuts-popup{display:block}
+        .shortcuts-popup{display:none;position:absolute;bottom:100%;left:0;background:var(--card);border:1px solid var(--border);border-radius:4px;padding:.4rem .5rem;width:200px;z-index:100;margin-bottom:4px}
+        .shortcuts-popup div{font-size:.55rem;padding:.1rem 0;display:flex;justify-content:space-between}
+        .shortcuts-popup kbd{background:var(--bg2);padding:.05rem .2rem;border-radius:2px;font-family:monospace}
+        .optional-panel{margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)}
+        .optional-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;flex-wrap:wrap;gap:.2rem}
+        .optional-header h4{font-size:.7rem;color:var(--text2)}
+        .search-box{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:.2rem .3rem}
+        .search-box input{background:transparent;border:none;color:var(--text);font-size:.6rem;width:100px;outline:none}
+        .search-box input::placeholder{color:var(--muted)}
+        .category-tabs{display:flex;gap:.1rem;flex-wrap:wrap;margin-bottom:.3rem}
+        .category-tab{padding:.15rem .3rem;background:var(--bg2);border:1px solid var(--border);border-radius:3px;font-size:.5rem;color:var(--muted);cursor:pointer}
+        .category-tab:hover{border-color:var(--blue);color:var(--text2)}
+        .category-tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+        .fields-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.15rem;max-height:120px;overflow-y:auto;padding:.2rem;background:var(--bg2);border-radius:3px}
+        .field-item{display:flex;align-items:center;gap:.15rem;padding:.15rem .2rem;background:var(--card);border:1px solid var(--border);border-radius:2px;font-size:.5rem;cursor:pointer}
+        .field-item:hover{border-color:var(--blue)}
+        .field-item.selected{background:rgba(59,130,246,.1);border-color:var(--blue)}
+        .field-item input{width:9px;height:9px}
+        .field-item .field-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .field-item .field-type{font-size:.4rem;padding:.01rem .1rem;background:var(--bg2);border-radius:2px;color:var(--muted)}
+        .selected-fields{display:flex;flex-wrap:wrap;gap:.12rem;margin-top:.3rem}
+        .selected-tag{display:flex;align-items:center;gap:.08rem;padding:.1rem .2rem;background:rgba(59,130,246,.1);border:1px solid var(--blue);border-radius:2px;font-size:.5rem;color:var(--blue)}
+        .selected-tag button{background:none;border:none;color:var(--blue);cursor:pointer;font-size:.55rem;line-height:1;padding:0 .06rem}
+        .selected-tag button:hover{color:var(--red)}
+        .selected-tag .reorder-btn{color:var(--muted);font-size:.45rem}
+        .selected-tag .reorder-btn:hover{color:var(--blue)}
+        .section{display:none}.section.active{display:block}
+        .preview-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.2rem}
+        .row-count,.dup-count,.err-count{padding:.06rem .25rem;border-radius:999px;font-size:.5rem;font-weight:600;color:#fff}
+        .row-count{background:var(--blue)}.dup-count{background:var(--orange)}.err-count{background:var(--red)}
+        footer{text-align:center;padding:.5rem;color:var(--muted);font-size:.5rem;border-top:1px solid var(--border);margin-top:.4rem}
+        footer a{color:var(--blue);text-decoration:none}
+        .hidden{display:none!important}
+        @media(max-width:640px){.container{padding:.5rem}.format-row{flex-direction:column}.format-group{min-width:100%}.settings-row{flex-direction:column}.table-scroll{max-height:280px}th,td{padding:.15rem .1rem}.btn{padding:.25rem .4rem}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✈️ FlightLog Converter</h1>
+            <p class="subtitle">Convert airline logbooks to MyFlightBook format</p>
+        </header>
+        <div class="steps">
+            <div class="step active" id="step1"><span>1</span> Setup</div>
+            <div class="step" id="step2"><span>2</span> Review</div>
+            <div class="step" id="step3"><span>3</span> Export</div>
+        </div>
+        <div class="section active" id="section1">
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Configure Import & Export</h2></div>
+                <div class="format-row">
+                    <div class="format-group">
+                        <label>Source Format</label>
+                        <select id="sourceFormat"><option value="ac-pqrm">Air Canada PQRM</option><option value="other" disabled>Other (Coming Soon)</option></select>
+                    </div>
+                    <div class="format-group">
+                        <label>Export Format</label>
+                        <select id="exportFormat"><option value="myflightbook">MyFlightBook</option><option value="other" disabled>Other (Coming Soon)</option></select>
+                    </div>
+                </div>
+                <div class="mode-toggle" id="modeToggle">
+                    <button class="active" data-mode="upload">📁 Upload</button>
+                    <button data-mode="manual">✏️ Manual</button>
+                </div>
+                <div id="uploadSection">
+                    <div class="upload-zone" id="uploadZone">
+                        <p class="upload-text">📁 Drop Air Canada XLS file(s) here</p>
+                        <p class="upload-hint">or click to browse • .xls, .xlsx, .csv</p>
+                        <input type="file" class="file-input" id="fileInput" accept=".xls,.xlsx,.csv,.txt" multiple>
+                    </div>
+                    <div class="file-list" id="fileList"></div>
+                    <div class="pilot-detection" id="pilotDetection">
+                        <h4>👤 Detected Pilot</h4>
+                        <input type="text" id="pilotName" placeholder="Your name">
+                        <div class="detected-info" id="detectedInfo"></div>
+                    </div>
+                    <div class="instructions">
+                        <h4>📋 Export from Aeronet</h4>
+                        <p>Aeronet → Flight Ops → PQRM → Logbook → Select month → Submit → Save as Excel</p>
+                    </div>
+                </div>
+                <div id="manualSection" class="hidden">
+                    <div class="pilot-detection visible">
+                        <h4>👤 Your Name</h4>
+                        <input type="text" id="pilotNameManual" placeholder="Enter your name">
+                        <div class="detected-info">Used for "Self" in PIC/SIC fields</div>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div class="setting-group">
+                        <label>Employer</label>
+                        <select id="employer"><option value="Rouge">Air Canada Rouge</option><option value="Air Canada">Air Canada Mainline</option></select>
+                    </div>
+                    <div class="setting-group small">
+                        <label>&nbsp;</label>
+                        <div class="toggle-group">
+                            <span class="toggle-label">Self</span>
+                            <div class="toggle" id="selfToggle"></div>
+                            <span class="toggle-label">Name</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="statusMessage"></div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="processBtn" disabled>Process →</button>
+                    <button class="btn btn-primary hidden" id="manualStartBtn">Start →</button>
+                </div>
+            </div>
+        </div>
+        <div class="section" id="section2">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Review & Edit</h2>
+                    <span class="row-count" id="flightCount">0</span>
+                    <span class="dup-count" id="dupCount" style="display:none">0</span>
+                    <span class="err-count" id="errCount" style="display:none">0</span>
+                </div>
+                <div class="toolbar">
+                    <button class="btn btn-small btn-secondary" id="addBtn">+ Add</button>
+                    <div class="toolbar-sep"></div>
+                    <button class="btn btn-small btn-secondary" id="allPicBtn">All PIC</button>
+                    <button class="btn btn-small btn-secondary" id="allSicBtn">All SIC</button>
+                    <div class="toolbar-sep"></div>
+                    <div class="dropdown" id="colDropdown">
+                        <button class="btn btn-small btn-secondary" id="colDropdownBtn">+ Columns</button>
+                        <div class="dropdown-content" id="colDropdownContent"></div>
+                    </div>
+                    <div class="toolbar-sep"></div>
+                    <div class="shortcuts-help">
+                        ⌨ Keys
+                        <div class="shortcuts-popup">
+                            <div><span>Navigate</span><kbd>Tab</kbd> <kbd>Arrows</kbd></div>
+                            <div><span>Edit cell</span><kbd>Enter</kbd></div>
+                            <div><span>Cancel</span><kbd>Esc</kbd></div>
+                            <div><span>Toggle checkbox</span><kbd>Space</kbd></div>
+                            <div><span>Clear cell</span><kbd>Del</kbd></div>
+                            <div><span>Undo</span><kbd>Ctrl+Z</kbd></div>
+                            <div><span>Add row</span><kbd>Ctrl+N</kbd></div>
+                            <div><span>Delete row</span><kbd>Ctrl+Del</kbd></div>
+                            <div><span>Fill column</span><kbd>Ctrl+Shift+F</kbd></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <div class="table-scroll" id="tableScroll">
+                        <table id="flightsTable"><thead id="flightsHead"></thead><tbody id="flightsBody"></tbody></table>
+                    </div>
+                </div>
+                <div class="stats-row" id="statsRow"></div>
+                <div class="optional-panel">
+                    <div class="optional-header">
+                        <h4>Optional Fields</h4>
+                        <div class="search-box"><input type="text" id="fieldSearch" placeholder="Search..."></div>
+                    </div>
+                    <div class="category-tabs" id="categoryTabs"></div>
+                    <div class="fields-grid" id="fieldsGrid"></div>
+                    <div class="selected-fields" id="selectedFields"></div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-secondary" id="backBtn1">← Back</button>
+                    <button class="btn btn-primary" id="previewBtn">Preview →</button>
+                </div>
+            </div>
+        </div>
+        <div class="section" id="section3">
+            <div class="card">
+                <div class="preview-header">
+                    <div style="display:flex;align-items:center;gap:.2rem">
+                        <h2 class="card-title">CSV Preview</h2>
+                        <span class="row-count" id="previewCount">0</span>
+                    </div>
+                    <button class="btn btn-success" id="downloadBtn">⬇ Download</button>
+                </div>
+                <div class="table-wrapper" style="margin-top:.3rem">
+                    <div class="table-scroll" style="max-height:240px">
+                        <table><thead id="previewHead"></thead><tbody id="previewBody"></tbody></table>
+                    </div>
+                </div>
+                <div class="btn-row"><button class="btn btn-secondary" id="backBtn2">← Back</button></div>
+            </div>
+        </div>
+        <footer>v9.0 • Data processed locally • <a href="https://myflightbook.com/logbook/mvc/pub/ImportTable" target="_blank">MFB Docs</a></footer>
+    </div>
+<script>
+const VERSION='9.0';
+const STORAGE_KEY='flightlog_prefs_v9';
+
+// Undo stack
+const undoStack = [];
+const MAX_UNDO = 50;
+function saveUndo(){
+    undoStack.push(JSON.stringify(flights.map(f=>({...f,opt:{...f.opt}}))));
+    if(undoStack.length > MAX_UNDO) undoStack.shift();
+}
+function doUndo(){
+    if(!undoStack.length){showStatus('Nothing to undo','warning');return}
+    const scrollTop=tableScroll?tableScroll.scrollTop:0;
+    const scrollLeft=tableScroll?tableScroll.scrollLeft:0;
+    const prev = JSON.parse(undoStack.pop());
+    flights = prev;
+    renderTable();
+    if(tableScroll){tableScroll.scrollTop=scrollTop;tableScroll.scrollLeft=scrollLeft}
+    showStatus('Undone','success');
+}
+
+const MODEL_MAP={'l319':'A320','l-319':'A320','l 319':'A320','l320':'A320','l-320':'A320','l 320':'A320','l321':'A320','l-321':'A320','l 321':'A320','a319':'A320','a320':'A320','a321':'A320','319':'A320','320':'A320','321':'A320','l330':'A330','l-330':'A330','l 330':'A330','a330':'A330','330':'A330','l350':'A350','l-350':'A350','l 350':'A350','a350':'A350','350':'A350','b737':'B737','b-737':'B737','737':'B737','737max':'B737','7m8':'B737','7m9':'B737','b777':'B777','777':'B777','77l':'B777','77w':'B777','b787':'B787','787':'B787','788':'B787','789':'B787','e175':'E175','e190':'E190','crj':'CRJ','q400':'Q400'};
+function normalizeModel(t){if(!t)return'';const n=t.toLowerCase().replace(/[\s\-]+/g,'');if(MODEL_MAP[n])return MODEL_MAP[n];for(const[k,v]of Object.entries(MODEL_MAP))if(n.includes(k)||k.includes(n))return v;return{model:t.trim().toUpperCase(),unmapped:true}}
+
+const CATS={
+'Time':[{k:'X-Country',l:'X-Country',t:'Number'},{k:'IMC',l:'IMC',t:'Number'},{k:'Simulated Instrument',l:'Sim Inst',t:'Number'},{k:'Dual Received',l:'Dual Rcvd',t:'Number'},{k:'CFI',l:'CFI',t:'Number'},{k:'Ground Simulator',l:'Ground Sim',t:'Number'},{k:'Pilot Flying Time',l:'PF Time',t:'Number'},{k:'Pilot Monitoring Time',l:'PM Time',t:'Number'},{k:'Multi-Pilot Time',l:'Multi-Pilot',t:'Number'},{k:'Solo Time',l:'Solo',t:'Number'},{k:'Relief Pilot Time',l:'Relief Time',t:'Number'}],
+'Landings':[{k:'FS Day Landings',l:'FS Day',t:'Number'},{k:'FS Night Landings',l:'FS Night',t:'Number'},{k:'Landings - Touch and Go',l:'Touch&Go',t:'Number'},{k:'Landings - Autoland',l:'Autoland',t:'Number'},{k:'Go-arounds',l:'Go-around',t:'Number'},{k:'Takeoffs - Night',l:'Night TO',t:'Number'}],
+'Approaches':[{k:'Approaches',l:'Approaches',t:'Number'},{k:'Hold',l:'Hold',t:'Yes/No'},{k:'Approaches - ILS',l:'ILS',t:'Number'},{k:'Approaches - GPS/LPV',l:'GPS/LPV',t:'Number'},{k:'Approaches - RNAV/GPS',l:'RNAV',t:'Number'},{k:'Approaches - VOR',l:'VOR',t:'Number'},{k:'Approaches - Visual',l:'Visual',t:'Number'},{k:'Missed Approaches',l:'Missed',t:'Number'}],
+'Personnel':[{k:'Instructor Name',l:'Instructor',t:'Text'},{k:'Safety-Pilot Name',l:'Safety Pilot',t:'Text'},{k:'Pilot Flying (Name)',l:'PF Name',t:'Text'},{k:'Pilot Monitoring (Name)',l:'PM Name',t:'Text'}],
+'Aircraft':[{k:'Route',l:'Route',t:'Text'},{k:'Additional Flight Remarks',l:'Remarks',t:'Text'},{k:'Distance Flown',l:'Distance',t:'Number'},{k:'Maximum Altitude',l:'Max Alt',t:'Number'}],
+'Training':[{k:'Flight Review',l:'Flt Review',t:'Yes/No'},{k:'Instrument Proficiency Check (IPC) Received',l:'IPC',t:'Yes/No'},{k:'Line Check Flight',l:'Line Check',t:'Yes/No'},{k:'Line Training Flight',l:'Line Trng',t:'Yes/No'},{k:'Line Training Captain (LTC) Time',l:'LTC Time',t:'Number'}],
+'Operations':[{k:'International Flight',l:'Int\'l',t:'Yes/No'},{k:'Deadhead',l:'Deadhead',t:'Yes/No'},{k:'Diversion',l:'Diversion',t:'Yes/No'},{k:'Ferry Flight',l:'Ferry',t:'Yes/No'},{k:'Rejected Takeoff',l:'RTO',t:'Yes/No'}],
+'Regs':[{k:'Part 91 Flight',l:'Pt 91',t:'Yes/No'},{k:'Part 121 Flight',l:'Pt 121',t:'Yes/No'},{k:'Part 705 Flight',l:'Pt 705',t:'Yes/No'}],
+'Duty':[{k:'Block Out Time',l:'Blk Out',t:'DateTime'},{k:'Block In Time',l:'Blk In',t:'DateTime'},{k:'Pay Time',l:'Pay',t:'Number'}]
+};
+
+// Base columns - PIC, SIC names derived; Comments always last
+const BASE_COLS=[
+{k:'Date',l:'Date',t:'date',deletable:false},
+{k:'flightNumber',l:'Flt#',t:'text',deletable:true},
+{k:'From',l:'From',t:'text',deletable:false},
+{k:'To',l:'To',t:'text',deletable:false},
+{k:'Tail Number',l:'Tail#',t:'text',deletable:true},
+{k:'Model',l:'Model',t:'text',deletable:true},
+{k:'picName',l:'PIC',t:'text',deletable:true},
+{k:'sicName',l:'SIC',t:'text',deletable:true},
+{k:'otherCrew',l:'Other Crew',t:'text',deletable:true},
+{k:'Total Flight Time',l:'Total',t:'num',isTime:true,deletable:false},
+{k:'Day Flight',l:'Day',t:'num',isTime:true,deletable:true},
+{k:'Night',l:'Night',t:'num',isTime:true,deletable:true},
+{k:'IFR Time',l:'IFR',t:'num',deletable:true},
+{k:'role',l:'Role',t:'toggle',deletable:false},
+{k:'Takeoffs (any)',l:'T/O',t:'num',deletable:true},
+{k:'Landings',l:'Ldg',t:'num',deletable:true},
+{k:'rightSeat',l:'RSeat',t:'cb',deletable:true},
+{k:'ltc',l:'LTC',t:'cb',deletable:true},
+{k:'ETOPS Flight',l:'ETOPS',t:'yn',deletable:true}
+];
+
+let files=[],rawFlights=[],flights=[],optFields=[],activeCat='Time',showSelf=true,csvData=[];
+let detectedPilot='',pilotCounts={},entryMode='upload',hiddenCols=new Set();
+let selectedCell={row:-1,col:-1},currentEdit=null,myName='';
+
+const $=id=>document.getElementById(id);
+const uploadZone=$('uploadZone'),fileInput=$('fileInput'),fileList=$('fileList'),
+pilotDetection=$('pilotDetection'),pilotNameInput=$('pilotName'),pilotNameManual=$('pilotNameManual'),detectedInfo=$('detectedInfo'),
+statusMsg=$('statusMessage'),employer=$('employer'),selfToggle=$('selfToggle'),
+processBtn=$('processBtn'),manualStartBtn=$('manualStartBtn'),
+flightsHead=$('flightsHead'),flightsBody=$('flightsBody'),flightCount=$('flightCount'),
+dupCount=$('dupCount'),errCount=$('errCount'),statsRow=$('statsRow'),
+categoryTabs=$('categoryTabs'),fieldsGrid=$('fieldsGrid'),tableScroll=$('tableScroll'),
+selectedFields=$('selectedFields'),fieldSearch=$('fieldSearch'),previewHead=$('previewHead'),
+previewBody=$('previewBody'),previewCount=$('previewCount'),
+uploadSection=$('uploadSection'),manualSection=$('manualSection'),
+modeToggle=$('modeToggle'),colDropdown=$('colDropdown'),colDropdownBtn=$('colDropdownBtn'),colDropdownContent=$('colDropdownContent');
+
+function loadPrefs(){
+    try{
+        const p=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+        if(p.employer)employer.value=p.employer;
+        if(p.showSelf!==undefined){showSelf=p.showSelf;selfToggle.classList.toggle('active',!showSelf)}
+        if(p.hiddenCols)hiddenCols=new Set(p.hiddenCols);
+        if(p.optFields)optFields=p.optFields;
+    }catch(e){}
+}
+function savePrefs(){
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({employer:employer.value,showSelf,hiddenCols:[...hiddenCols],optFields}))}catch(e){}
+}
+
+modeToggle.addEventListener('click',e=>{
+    const btn=e.target.closest('button');if(!btn)return;
+    entryMode=btn.dataset.mode;
+    modeToggle.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===entryMode));
+    uploadSection.classList.toggle('hidden',entryMode==='manual');
+    manualSection.classList.toggle('hidden',entryMode==='upload');
+    processBtn.classList.toggle('hidden',entryMode==='manual');
+    manualStartBtn.classList.toggle('hidden',entryMode==='upload');
+});
+
+employer.addEventListener('change',savePrefs);
+// Toggle: active (right/blue) = show full Name, inactive (left) = show Self
+selfToggle.addEventListener('click',()=>{showSelf=!showSelf;selfToggle.classList.toggle('active',!showSelf);savePrefs();if(flights.length)renderTable()});
+
+uploadZone.addEventListener('click',e=>{if(e.target!==fileInput)fileInput.click()});
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');handleFiles(e.dataTransfer.files)});
+fileInput.addEventListener('change',e=>handleFiles(e.target.files));
+
+processBtn.addEventListener('click',processAllFiles);
+manualStartBtn.addEventListener('click',startManualEntry);
+$('addBtn').addEventListener('click',addNewRow);
+function addNewRow(){
+    flights.push(createEmptyFlight());
+    const newRowIdx=flights.length-1;
+    selectedCell={row:newRowIdx,col:0};
+    renderTable();
+    // Scroll to new row and start editing
+    setTimeout(()=>{
+        const tr=flightsBody.children[newRowIdx];
+        if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
+        const cols=getVisibleCols();
+        activateCell(newRowIdx,cols[0]);
+    },30);
+}
+function fillColumn(){
+    if(selectedCell.row<0||selectedCell.col<0)return;
+    const cols=getVisibleCols();
+    const col=cols[selectedCell.col];
+    if(!col||col.t==='toggle')return;// Can't fill role toggle this way
+    const srcFlight=flights[selectedCell.row];
+    const val=col.isOpt?(srcFlight.opt[col.k]||''):(srcFlight[col.k]||'');
+    if(!val){showStatus('Select a cell with a value first','warning');return}
+    saveUndo();
+    flights.forEach(f=>{
+        if(col.isOpt)f.opt[col.k]=val;
+        else if(col.t==='cb')f[col.k]=srcFlight[col.k];
+        else if(col.t==='yn')f[col.k]=val;
+        else f[col.k]=val;
+    });
+    showStatus(`Filled ${flights.length} rows with "${val}"`,'success');
+    renderTable();
+}
+function scrollToCell(row,col){
+    setTimeout(()=>{
+        const tr=flightsBody.children[row];
+        if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
+    },10);
+}
+$('allPicBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='PIC';updatePilotNames(f)});renderTable()});
+$('allSicBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='SIC';updatePilotNames(f)});renderTable()});
+$('backBtn1').addEventListener('click',()=>goToStep(1));
+$('previewBtn').addEventListener('click',generatePreview);
+$('backBtn2').addEventListener('click',()=>goToStep(2));
+$('downloadBtn').addEventListener('click',downloadCSV);
+fieldSearch.addEventListener('input',renderFieldsGrid);
+
+colDropdownBtn.addEventListener('click',e=>{e.stopPropagation();colDropdown.classList.toggle('open');renderColDropdown()});
+document.addEventListener('click',()=>colDropdown.classList.remove('open'));
+
+// Global keyboard shortcuts
+document.addEventListener('keydown',e=>{
+    const inInput=document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='checkbox';
+    const cols=getVisibleCols();
+    
+    // Ctrl+Z: Undo
+    if(e.ctrlKey&&e.key==='z'&&!e.shiftKey){
+        e.preventDefault();
+        doUndo();
+        return;
+    }
+    
+    // Ctrl+N: Add new row
+    if(e.ctrlKey&&e.key==='n'){
+        e.preventDefault();
+        addNewRow();
+        return;
+    }
+    
+    // Ctrl+Shift+F: Fill column with current cell value
+    if(e.ctrlKey&&e.shiftKey&&(e.key==='F'||e.key==='f')&&selectedCell.row>=0){
+        e.preventDefault();
+        fillColumn();
+        return;
+    }
+    
+    // Ctrl+Delete or Ctrl+Backspace: Delete current row
+    if(e.ctrlKey&&(e.key==='Delete'||e.key==='Backspace')&&selectedCell.row>=0&&!inInput){
+        e.preventDefault();
+        delFlight(selectedCell.row);
+        return;
+    }
+    
+    // Don't process other keys if in text input
+    if(inInput)return;
+    if(!flights.length)return;
+    
+    // F2 or Enter: Enter edit mode on selected cell
+    if((e.key==='F2'||e.key==='Enter')&&selectedCell.row>=0&&!currentEdit){
+        e.preventDefault();
+        const col=cols[selectedCell.col];
+        if(col)activateCell(selectedCell.row,col);
+        return;
+    }
+    
+    // Delete/Backspace: Clear current cell
+    if((e.key==='Delete'||e.key==='Backspace')&&selectedCell.row>=0&&!currentEdit&&!e.ctrlKey){
+        e.preventDefault();
+        const col=cols[selectedCell.col];
+        if(col&&!['toggle','cb','yn'].includes(col.t)){
+            saveUndo();
+            if(col.isOpt)flights[selectedCell.row].opt[col.k]='';
+            else flights[selectedCell.row][col.k]='';
+            const el=flightsBody.querySelector(`[data-i="${selectedCell.row}"][data-k="${col.k}"].editable`);
+            if(el)el.textContent='\u00A0';
+            updateStats();
+        }
+        return;
+    }
+    
+    // Home: Go to first cell of row (Ctrl+Home = first cell of table)
+    if(e.key==='Home'&&selectedCell.row>=0){
+        e.preventDefault();
+        const targetRow=e.ctrlKey?0:selectedCell.row;
+        selectCell(targetRow,0);
+        const tr=flightsBody.children[targetRow];
+        if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
+        return;
+    }
+    
+    // End: Go to last cell of row (Ctrl+End = last cell of table)
+    if(e.key==='End'&&selectedCell.row>=0){
+        e.preventDefault();
+        const lastCol=cols.length-1;
+        const targetRow=e.ctrlKey?flights.length-1:selectedCell.row;
+        selectCell(targetRow,lastCol);
+        const tr=flightsBody.children[targetRow];
+        if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
+        return;
+    }
+    
+    // Arrow key navigation
+    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)&&selectedCell.row>=0){
+        e.preventDefault();
+        let{row,col}=selectedCell;
+        if(e.key==='ArrowUp'){row--;if(row<0)row=flights.length-1}
+        else if(e.key==='ArrowDown'){row++;if(row>=flights.length)row=0}
+        else if(e.key==='ArrowLeft'){col--;if(col<0){col=cols.length-1;row--;if(row<0)row=flights.length-1}}
+        else if(e.key==='ArrowRight'){col++;if(col>=cols.length){col=0;row++;if(row>=flights.length)row=0}}
+        selectCell(row,col);
+        const tr=flightsBody.children[row];
+        if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
+    }
+});
+
+flightsBody.addEventListener('click',e=>{
+    const td=e.target.closest('td');
+    if(!td||td.classList.contains('sticky-col'))return;
+    const tr=td.closest('tr');if(!tr)return;
+    const rowIdx=[...flightsBody.children].indexOf(tr);
+    const colIdx=[...tr.children].indexOf(td)-1;
+    if(rowIdx>=0&&colIdx>=0)selectCell(rowIdx,colIdx);
+    
+    const ed=e.target.closest('.editable');
+    if(ed){const cols=getVisibleCols();activateCell(rowIdx,cols[colIdx])}
+    const del=e.target.closest('.delete-btn');
+    if(del)delFlight(parseInt(del.dataset.del));
+    const rb=e.target.closest('.role-toggle button');
+    if(rb){
+        const i=parseInt(rb.dataset.i);
+        flights[i].role=rb.dataset.r;
+        updatePilotNames(flights[i]);
+        renderTable();
+    }
+});
+flightsBody.addEventListener('change',e=>{
+    if(e.target.classList.contains('flight-checkbox')){
+        const i=parseInt(e.target.dataset.i),k=e.target.dataset.k,isOpt=e.target.dataset.opt==='1';
+        if(isOpt)flights[i].opt[k]=e.target.checked?'Yes':'';
+        else if(k==='rightSeat'||k==='ltc')flights[i][k]=e.target.checked;
+        else flights[i][k]=e.target.checked?'Yes':'';
+        updateStats();
+    }
+});
+flightsBody.addEventListener('keydown',e=>{
+    const cb=e.target.closest('.flight-checkbox');
+    const rb=e.target.closest('.role-toggle button');
+    
+    if(e.key==='Tab'&&(cb||rb)){
+        e.preventDefault();
+        const cols=getVisibleCols();
+        let{row,col}=selectedCell;
+        if(e.shiftKey){col--;if(col<0){col=cols.length-1;row--;if(row<0)row=flights.length-1}}
+        else{col++;if(col>=cols.length){col=0;row++;if(row>=flights.length)row=0}}
+        selectCell(row,col);
+        const tr=flightsBody.children[row];
+        if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
+        activateCell(row,cols[col]);
+    }
+    // Arrow keys for role toggle
+    if(rb&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
+        e.preventDefault();
+        const i=parseInt(rb.dataset.i);
+        const roles=['PIC','SIC','RP'];
+        const curIdx=roles.indexOf(flights[i].role);
+        const newIdx=e.key==='ArrowRight'?(curIdx+1)%3:(curIdx+2)%3;
+        flights[i].role=roles[newIdx];
+        updatePilotNames(flights[i]);
+        // Update just the role buttons and pilot name cells without full re-render
+        const btns=flightsBody.querySelectorAll(`.role-toggle button[data-i="${i}"]`);
+        btns.forEach(b=>b.classList.toggle('active',b.dataset.r===roles[newIdx]));
+        // Re-focus
+        const btn=flightsBody.querySelector(`.role-toggle button[data-i="${i}"][data-r="${roles[newIdx]}"]`);
+        if(btn)btn.focus();
+    }
+});
+
+flightsHead.addEventListener('click',e=>{
+    const delBtn=e.target.closest('.col-delete');
+    if(delBtn){
+        const k=delBtn.dataset.k;
+        hiddenCols.add(k);
+        savePrefs();
+        renderTable();
+    }
+});
+
+loadPrefs();initCatTabs();renderFieldsGrid();
+
+function parseTimeToMinutes(t){if(!t)return 0;t=String(t).trim();const hm=t.match(/^(\d+):(\d+)$/);if(hm)return parseInt(hm[1])*60+parseInt(hm[2]);const d=parseFloat(t);return isNaN(d)?0:Math.round(d*60)}
+function minutesToDisplay(m){return m?(m/60).toFixed(1):''}
+
+function updatePilotNames(f){
+    const self=showSelf?'Self':myName;
+    if(f.role==='PIC'){
+        f.picName=self;
+        f.sicName=f.origOtherPilot||'';
+        f.otherCrew=f.origOtherCrew||'';
+    }else if(f.role==='SIC'){
+        f.picName=f.origOtherPilot||'';
+        f.sicName=self;
+        f.otherCrew=f.origOtherCrew||'';
+    }else{// RP
+        f.picName=f.origPicName||'';
+        f.sicName=f.origSicName||'';
+        // User is other crew when RP
+        const existing=f.origOtherCrew?f.origOtherCrew+', ':'';
+        f.otherCrew=existing+self;
+    }
+}
+
+function startManualEntry(){
+    myName=pilotNameManual.value.trim();
+    if(!myName){showStatus('Enter your name.','error');return}
+    flights=[createEmptyFlight()];goToStep(2);renderTable();
+}
+function createEmptyFlight(){
+    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':'','Landings':'','ETOPS Flight':'',role:'PIC',rightSeat:false,ltc:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
+    updatePilotNames(f);
+    return f;
+}
+
+async function handleFiles(f){
+    for(let x of f)if(!files.find(y=>y.name===x.name))files.push(x);
+    renderFileList();rawFlights=[];pilotCounts={};
+    for(let file of files){const c=await readFile(file);parseFileRaw(c)}
+    let maxCount=0;detectedPilot='';
+    for(let name in pilotCounts)if(pilotCounts[name]>maxCount){maxCount=pilotCounts[name];detectedPilot=name}
+    if(detectedPilot){pilotDetection.classList.add('visible');pilotNameInput.value=detectedPilot;detectedInfo.textContent=`${maxCount}/${rawFlights.length} flights`}
+    processBtn.disabled=!files.length;
+    if(files.length)uploadZone.classList.add('has-file');
+}
+function renderFileList(){
+    fileList.innerHTML=files.map((f,i)=>`<div class="file-item"><span>📄 ${f.name}</span><button data-idx="${i}">✕</button></div>`).join('');
+    fileList.querySelectorAll('button').forEach(btn=>btn.onclick=e=>{
+        files.splice(parseInt(e.target.dataset.idx),1);renderFileList();
+        processBtn.disabled=!files.length;
+        if(!files.length){uploadZone.classList.remove('has-file');pilotDetection.classList.remove('visible');rawFlights=[]}
+    });
+}
+function readFile(f){return new Promise(r=>{const x=new FileReader();x.onload=e=>r(e.target.result);x.readAsText(f)})}
+function parseFileRaw(c){
+    const lines=c.split(/\r?\n/);let hdr=-1;
+    for(let i=0;i<Math.min(10,lines.length);i++)if(lines[i].includes('Date')&&lines[i].includes('Type')){hdr=i;break}
+    if(hdr===-1)return;
+    for(let i=hdr+1;i<lines.length;i++){
+        const ln=lines[i];if(!ln.trim())continue;
+        const col=ln.split('\t');if(col.length<12)continue;
+        const ds=col[0].trim();if(!ds||ds.toLowerCase().includes('total')||!/^[A-Za-z]{3}\s+\d{1,2}\s+\d{4}/.test(ds))continue;
+        const pic=(col[5]||'').trim(),sic=(col[6]||'').trim(),crew=(col[7]||'').trim(),type=(col[1]||'').trim();
+        if(pic)pilotCounts[pic]=(pilotCounts[pic]||0)+1;
+        if(sic)pilotCounts[sic]=(pilotCounts[sic]||0)+1;
+        rawFlights.push({dateStr:ds,type,reg:(col[2]||'').trim(),fin:(col[3]||'').trim(),fltNum:(col[4]||'').trim(),picNameRaw:pic,sicNameRaw:sic,otherCrew:crew,from:(col[8]||'').trim(),to:(col[10]||'').trim(),ifrTime:(col[12]||'').trim(),dayTime:(col[14]||'').trim(),nightTime:(col[15]||'').trim(),takeoffFlag:(col[20]||'').trim().toUpperCase(),landingFlag:(col[21]||'').trim().toUpperCase(),rightSeatFlag:(col[22]||'').trim().toUpperCase(),etopsFlag:(col[23]||'').trim().toUpperCase()});
+    }
+}
+function processAllFiles(){
+    myName=pilotNameInput.value.trim();
+    if(!myName){showStatus('Enter pilot name.','error');return}
+    flights=[];
+    rawFlights.forEach(rf=>{
+        const dt=convDate(rf.dateStr);
+        const iAmPic=rf.picNameRaw.trim()===myName;
+        const otherPilot=iAmPic?rf.sicNameRaw:rf.picNameRaw;
+        const totalMins=parseTimeToMinutes(rf.ifrTime||rf.dayTime),dayMins=parseTimeToMinutes(rf.dayTime),nightMins=parseTimeToMinutes(rf.nightTime);
+        const mr=normalizeModel(rf.type),model=typeof mr==='object'?mr.model:mr,unmapped=typeof mr==='object'&&mr.unmapped;
+        
+        const f={
+            sortDate:dt,Date:dt,flightNumber:cleanFlt(rf.fltNum),From:rf.from,To:rf.to,
+            'Tail Number':fmtTail(rf.reg),Model:model,modelUnmapped:unmapped,
+            'Nose Number':extNose(rf.fin),'Employer Name':employer.value,
+            totalMinutes:totalMins,dayMinutes:dayMins,nightMinutes:nightMins,
+            'Total Flight Time':minutesToDisplay(totalMins),
+            'Day Flight':minutesToDisplay(dayMins),'Night':minutesToDisplay(nightMins),
+            'IFR Time':minutesToDisplay(parseTimeToMinutes(rf.ifrTime)),
+            'Takeoffs (any)':rf.takeoffFlag==='Y'?1:'','Landings':rf.landingFlag==='Y'?1:'',
+            'ETOPS Flight':rf.etopsFlag==='Y'?'Yes':'',
+            role:iAmPic?'PIC':'SIC',rightSeat:rf.rightSeatFlag==='Y',ltc:false,
+            // Store originals for swapping
+            origPicName:rf.picNameRaw,origSicName:rf.sicNameRaw,
+            origOtherPilot:otherPilot,origOtherCrew:rf.otherCrew,
+            picName:'',sicName:'',otherCrew:'',
+            Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}
+        };
+        updatePilotNames(f);
+        flights.push(f);
+    });
+    if(!flights.length){showStatus('No flights found.','error');return}
+    flights.sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate));
+    detectDups();validateAllTimes();
+    showStatus(`Loaded ${flights.length} flights.`,flights.some(f=>f.isDup||f.hasTimeError)?'warning':'success');
+    setTimeout(()=>{goToStep(2);renderTable()},300);
+}
+function detectDups(){const m=new Map();flights.forEach(f=>{const k=f.Date+'_'+f.flightNumber+'_'+f.From+'_'+f.To;if(m.has(k)){f.isDup=true;m.get(k).isDup=true}else m.set(k,f)})}
+function validateAllTimes(){flights.forEach(validateFlightTime)}
+function validateFlightTime(f){
+    const t=f.totalMinutes||0,d=f.dayMinutes||0,n=f.nightMinutes||0;
+    f.hasTimeError=false;f.hasRoundingNotice=false;
+    if(!t&&!d&&!n)return;
+    const diff=Math.abs(t-(d+n));
+    if(diff===0)return;
+    if(diff<=1){const dt=parseFloat(f['Total Flight Time'])||0,dd=parseFloat(f['Day Flight'])||0,dn=parseFloat(f['Night'])||0;if(Math.abs(dt-Math.round((dd+dn)*10)/10)>0.05)f.hasRoundingNotice=true}
+    else f.hasTimeError=true;
+}
+function autoCalcTime(f,field){
+    if(field==='Total Flight Time')f.totalMinutes=parseTimeToMinutes(f['Total Flight Time']);
+    else if(field==='Day Flight')f.dayMinutes=parseTimeToMinutes(f['Day Flight']);
+    else if(field==='Night')f.nightMinutes=parseTimeToMinutes(f['Night']);
+    const t=f.totalMinutes||0,d=f.dayMinutes||0,n=f.nightMinutes||0;
+    if(field==='Day Flight'||field==='Night'){f.totalMinutes=d+n;f['Total Flight Time']=minutesToDisplay(d+n)}
+    else if(field==='Total Flight Time'){
+        if(t>0&&d>0&&!n){f.nightMinutes=Math.max(0,t-d);f['Night']=minutesToDisplay(f.nightMinutes)}
+        else if(t>0&&n>0&&!d){f.dayMinutes=Math.max(0,t-n);f['Day Flight']=minutesToDisplay(f.dayMinutes)}
+    }
+    validateFlightTime(f);
+}
+
+function getVisibleCols(){
+    // Filter hidden, add optFields, then Comments last
+    let cols=BASE_COLS.filter(c=>!hiddenCols.has(c.k));
+    optFields.forEach(k=>{const f=findF(k);if(f&&!hiddenCols.has(k))cols.push({k:f.k,l:f.l,t:f.t,isOpt:true,deletable:true})});
+    cols.push({k:'Comments',l:'Comments',t:'text',deletable:true});
+    return cols;
+}
+
+function getAllColKeys(){
+    // All possible columns for dropdown
+    const all=[...BASE_COLS.map(c=>({k:c.k,l:c.l}))];
+    optFields.forEach(k=>{const f=findF(k);if(f)all.push({k:f.k,l:f.l})});
+    all.push({k:'Comments',l:'Comments'});
+    return all;
+}
+
+function renderColDropdown(){
+    const all=getAllColKeys();
+    colDropdownContent.innerHTML=all.map(c=>`<label class="dropdown-item"><input type="checkbox" data-k="${c.k}" ${hiddenCols.has(c.k)?'':'checked'}> ${c.l}</label>`).join('');
+    colDropdownContent.querySelectorAll('input').forEach(inp=>{
+        inp.addEventListener('change',e=>{
+            const k=e.target.dataset.k;
+            if(e.target.checked)hiddenCols.delete(k);
+            else hiddenCols.add(k);
+            savePrefs();renderTable();
+        });
+    });
+}
+
+function selectCell(row,col){
+    selectedCell={row,col};
+    flightsBody.querySelectorAll('td.selected-cell').forEach(td=>td.classList.remove('selected-cell'));
+    const tr=flightsBody.children[row];
+    if(tr){
+        const td=tr.children[col+1];// +1 for sticky # col
+        if(td)td.classList.add('selected-cell');
+    }
+}
+
+function activateCell(row,col){
+    const f=flights[row];if(!f)return;
+    const k=col.k,t=col.t;
+    if(t==='cb'||t==='yn'){
+        // Just focus checkbox, don't toggle it - user can press Space to toggle
+        const cb=flightsBody.querySelector(`input[data-i="${row}"][data-k="${k}"]`);
+        if(cb)cb.focus();
+    }else if(t==='toggle'){
+        // Focus first button of role toggle
+        const btn=flightsBody.querySelector(`.role-toggle button[data-i="${row}"]`);
+        if(btn)btn.focus();
+    }else{
+        // Text, number, date fields - enter edit mode
+        const el=flightsBody.querySelector(`[data-i="${row}"][data-k="${k}"].editable`);
+        if(el)startEdit(el,row,k,t,col.isOpt);
+    }
+}
+
+function renderTable(){
+    const cols=getVisibleCols();
+    let h='<tr><th class="sticky-col">#</th>';
+    cols.forEach(c=>{
+        const del=c.deletable!==false?`<button class="col-delete" data-k="${c.k}">×</button>`:'';
+        h+=`<th class="${['cb','toggle','yn'].includes(c.t)?'center':''}">${c.l}${del}</th>`;
+    });
+    h+='<th></th></tr>';flightsHead.innerHTML=h;
+    
+    let b='';
+    flights.forEach((f,i)=>{
+        // Update pilot names in case showSelf changed
+        updatePilotNames(f);
+        let cls=f.hasTimeError?'time-error':f.hasRoundingNotice?'rounding-notice':f.isDup?'duplicate':'';
+        b+=`<tr class="${cls}"><td class="sticky-col">`;
+        if(f.hasTimeError)b+='<span class="badge err-badge">ERR</span>';
+        else if(f.hasRoundingNotice)b+='<span class="badge info-badge">~</span>';
+        else if(f.isDup)b+='<span class="badge dup-badge">DUP</span>';
+        b+=`${i+1}</td>`;
+        cols.forEach((c,ci)=>{
+            const isSelected=selectedCell.row===i&&selectedCell.col===ci;
+            b+=renderCell(f,c,i,isSelected);
+        });
+        b+=`<td><button class="delete-btn" data-del="${i}">🗑</button></td></tr>`;
+    });
+    flightsBody.innerHTML=b;
+    flightCount.textContent=flights.length;
+    const dc=flights.filter(x=>x.isDup).length,ec=flights.filter(x=>x.hasTimeError).length;
+    dupCount.style.display=dc?'inline':'none';dupCount.textContent=dc+' dup';
+    errCount.style.display=ec?'inline':'none';errCount.textContent=ec+' err';
+    updateStats();renderSelFields();
+}
+
+function renderCell(f,c,i,isSelected){
+    const v=c.isOpt?(f.opt[c.k]||''):f[c.k];
+    const selClass=isSelected?' selected-cell':'';
+    if(c.t==='cb')return `<td class="center${selClass}"><input type="checkbox" class="flight-checkbox" data-i="${i}" data-k="${c.k}" ${v?'checked':''}></td>`;
+    if(c.t==='yn')return `<td class="center${selClass}"><input type="checkbox" class="flight-checkbox" data-i="${i}" data-k="${c.k}" ${c.isOpt?'data-opt="1"':''} ${v==='Yes'?'checked':''}></td>`;
+    if(c.t==='toggle')return `<td class="center${selClass}"><div class="role-toggle"><button data-i="${i}" data-r="PIC" data-k="role" class="${f.role==='PIC'?'active':''}">PIC</button><button data-i="${i}" data-r="SIC" data-k="role" class="${f.role==='SIC'?'active':''}">SIC</button><button data-i="${i}" data-r="RP" data-k="role" class="${f.role==='RP'?'active':''}">RP</button></div></td>`;
+    
+    let cls=c.isTime?'cell-time time-cell':['From','To'].includes(c.k)?'cell-route':['picName','sicName','otherCrew'].includes(c.k)?'cell-pilot':c.k==='Model'?'cell-model':'';
+    let extra=c.k==='Model'&&f.modelUnmapped?'<span class="badge unmapped-badge">?</span>':'';
+    const optAttr=c.isOpt?'data-opt="1"':'data-opt="0"';
+    return `<td class="${cls}${selClass}"><span class="editable" data-i="${i}" data-k="${c.k}" data-t="${c.t}" ${optAttr}>${v||'&nbsp;'}</span>${extra}</td>`;
+}
+
+function startEdit(el,i,k,t,isOpt){
+    if(currentEdit)finishEdit(true);
+    currentEdit={el,i,k,t,isOpt};
+    const cur=isOpt?(flights[i].opt[k]||''):(flights[i][k]||'');
+    const inp=document.createElement('input');
+    if(t==='num'||t==='Number'){inp.type='number';inp.step='0.1';inp.min='0'}
+    else if(t==='DateTime')inp.type='datetime-local';
+    else if(t==='date'){inp.type='date';if(cur){const p=cur.split('/');if(p.length===3)inp.value=p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}}
+    else{inp.type='text';inp.value=cur}
+    if(t!=='date')inp.value=cur;
+    inp.className='edit-input';
+    inp.addEventListener('blur',()=>setTimeout(()=>{if(currentEdit)finishEdit(true)},50));
+    inp.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){e.preventDefault();finishEdit(true)}
+        else if(e.key==='Escape'){e.preventDefault();finishEdit(false)}
+        else if(e.key==='Tab'){
+            e.preventDefault();
+            const cols=getVisibleCols();
+            let{row,col}=selectedCell;
+            if(e.shiftKey){col--;if(col<0){col=cols.length-1;row--;if(row<0)row=flights.length-1}}
+            else{col++;if(col>=cols.length){col=0;row++;if(row>=flights.length)row=0}}
+            // Finish edit, then navigate
+            finishEdit(true,()=>{
+                selectCell(row,col);
+                // Scroll the row into view
+                const tr=flightsBody.children[row];
+                if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
+                activateCell(row,cols[col]);
+            });
+        }
+        else if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+            e.preventDefault();
+            let{row,col}=selectedCell;
+            row+=e.key==='ArrowDown'?1:-1;
+            if(row<0)row=flights.length-1;
+            if(row>=flights.length)row=0;
+            finishEdit(true,()=>{
+                selectCell(row,col);
+                const tr=flightsBody.children[row];
+                if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
+                const cols=getVisibleCols();
+                activateCell(row,cols[col]);
+            });
+        }
+    });
+    el.style.display='none';el.parentNode.insertBefore(inp,el);inp.focus();if(t!=='date')inp.select();
+}
+
+function finishEdit(save,andThen){
+    if(!currentEdit)return;
+    const{el,i,k,t,isOpt}=currentEdit;
+    const inp=el.parentNode.querySelector('.edit-input');
+    if(save&&inp){
+        let v=inp.value.trim();
+        if((t==='num'||t==='Number')&&v)v=parseFloat(v)?parseFloat(v).toFixed(1):v;
+        else if(t==='DateTime'&&v){const dt=new Date(v);if(!isNaN(dt))v=(dt.getMonth()+1)+'/'+dt.getDate()+'/'+dt.getFullYear()+' '+dt.getHours().toString().padStart(2,'0')+':'+dt.getMinutes().toString().padStart(2,'0')}
+        else if(t==='date'&&v){const p=v.split('-');if(p.length===3)v=parseInt(p[1])+'/'+parseInt(p[2])+'/'+p[0]}
+        // Save undo state before making changes
+        const oldVal=isOpt?(flights[i].opt[k]||''):(flights[i][k]||'');
+        if(v!==oldVal)saveUndo();
+        if(isOpt)flights[i].opt[k]=v;
+        else{flights[i][k]=v;if(['Total Flight Time','Day Flight','Night'].includes(k))autoCalcTime(flights[i],k)}
+        // Update cell text in place without full re-render
+        el.textContent=v||'\u00A0';
+    }
+    if(inp)inp.remove();
+    el.style.display='';
+    currentEdit=null;
+    // Only do full render if we need to update stats/validation, otherwise skip
+    if(save&&['Total Flight Time','Day Flight','Night'].includes(k)){
+        const scrollTop=tableScroll.scrollTop;
+        const scrollLeft=tableScroll.scrollLeft;
+        renderTable();
+        tableScroll.scrollTop=scrollTop;
+        tableScroll.scrollLeft=scrollLeft;
+    }else{
+        updateStats();
+    }
+    if(andThen)andThen();
+}
+
+function delFlight(i){if(flights.length===1){showStatus('Cannot delete last.','error');return}saveUndo();flights.splice(i,1);detectDups();validateAllTimes();if(selectedCell.row>=flights.length)selectedCell.row=flights.length-1;renderTable()}
+
+function initCatTabs(){
+    categoryTabs.innerHTML=Object.keys(CATS).map(c=>`<div class="category-tab ${c===activeCat?'active':''}" data-cat="${c}">${c}</div>`).join('');
+    categoryTabs.onclick=e=>{if(e.target.classList.contains('category-tab')){activeCat=e.target.dataset.cat;document.querySelectorAll('.category-tab').forEach(x=>x.classList.toggle('active',x.dataset.cat===activeCat));renderFieldsGrid()}}
+}
+function renderFieldsGrid(){
+    const s=(fieldSearch.value||'').toLowerCase();
+    let arr=CATS[activeCat]||[];
+    if(s){arr=[];Object.values(CATS).forEach(fs=>fs.forEach(f=>{if(f.l.toLowerCase().includes(s)||f.k.toLowerCase().includes(s))arr.push(f)}))}
+    fieldsGrid.innerHTML=arr.map(f=>`<div class="field-item ${optFields.includes(f.k)?'selected':''}" data-fk="${f.k}"><input type="checkbox" ${optFields.includes(f.k)?'checked':''}><span class="field-name">${f.l}</span><span class="field-type">${f.t}</span></div>`).join('');
+    fieldsGrid.querySelectorAll('.field-item').forEach(fi=>fi.onclick=()=>{
+        const k=fi.dataset.fk,idx=optFields.indexOf(k);
+        if(idx>-1)optFields.splice(idx,1);else optFields.push(k);
+        savePrefs();renderFieldsGrid();if(flights.length)renderTable();
+    });
+}
+function renderSelFields(){
+    if(!optFields.length){selectedFields.innerHTML='<span style="font-size:.5rem;color:var(--muted)">None</span>';return}
+    selectedFields.innerHTML=optFields.map((k,idx)=>{
+        const f=findF(k);
+        return `<span class="selected-tag" data-k="${k}"><button class="reorder-btn" data-dir="up" data-idx="${idx}">↑</button>${f?f.l:k}<button class="reorder-btn" data-dir="down" data-idx="${idx}">↓</button><button data-remove="${k}">✕</button></span>`;
+    }).join('');
+    selectedFields.querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=e=>{
+        optFields.splice(optFields.indexOf(e.target.dataset.remove),1);savePrefs();renderFieldsGrid();if(flights.length)renderTable();
+    });
+    selectedFields.querySelectorAll('.reorder-btn').forEach(btn=>btn.onclick=e=>{
+        e.stopPropagation();
+        const idx=parseInt(e.target.dataset.idx),dir=e.target.dataset.dir;
+        if(dir==='up'&&idx>0)[optFields[idx-1],optFields[idx]]=[optFields[idx],optFields[idx-1]];
+        else if(dir==='down'&&idx<optFields.length-1)[optFields[idx],optFields[idx+1]]=[optFields[idx+1],optFields[idx]];
+        savePrefs();renderSelFields();if(flights.length)renderTable();
+    });
+}
+function findF(k){for(let c of Object.values(CATS)){const f=c.find(x=>x.k===k);if(f)return f}return null}
+
+function updateStats(){
+    let tot=0,pic=0,sic=0,rp=0,day=0,ngt=0,to=0,ldg=0;
+    flights.forEach(f=>{
+        const t=parseFloat(f['Total Flight Time'])||0;tot+=t;
+        if(f.role==='PIC')pic+=t;else if(f.role==='SIC')sic+=t;else if(f.role==='RP')rp+=t;
+        day+=parseFloat(f['Day Flight'])||0;ngt+=parseFloat(f['Night'])||0;
+        to+=parseInt(f['Takeoffs (any)'])||0;ldg+=parseInt(f['Landings'])||0;
+    });
+    statsRow.innerHTML=`<div class="stat-box"><div class="stat-label">Total</div><div class="stat-value">${tot.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">PIC</div><div class="stat-value">${pic.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">SIC</div><div class="stat-value">${sic.toFixed(1)}</div></div>${rp?`<div class="stat-box"><div class="stat-label">RP</div><div class="stat-value">${rp.toFixed(1)}</div></div>`:''}<div class="stat-box"><div class="stat-label">Day</div><div class="stat-value">${day.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">Night</div><div class="stat-value">${ngt.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">T/O</div><div class="stat-value">${to}</div></div><div class="stat-box"><div class="stat-label">Ldg</div><div class="stat-value">${ldg}</div></div>`;
+}
+
+function generatePreview(){
+    const hasRP=flights.some(f=>f.role==='RP');
+    const hasOtherCrew=flights.some(f=>f.otherCrew);
+    const visibleCols=getVisibleCols().map(c=>c.k);
+    
+    csvData=flights.map(f=>{
+        const t=f['Total Flight Time']||'';
+        const isPIC=f.role==='PIC',isSIC=f.role==='SIC',isRP=f.role==='RP';
+        const row={};
+        
+        // Only include non-hidden columns
+        if(visibleCols.includes('Date'))row['Date']=f.Date;
+        if(visibleCols.includes('Tail Number'))row['Tail Number']=f['Tail Number'];
+        if(visibleCols.includes('Model'))row['Model']=f.Model||'';
+        row['Total Flight Time']=t;
+        if(visibleCols.includes('From'))row['From']=f.From;
+        if(visibleCols.includes('To'))row['To']=f.To;
+        
+        // PIC/SIC time
+        row['PIC']=isPIC?t:'';
+        row['SIC']=isSIC?t:'';
+        
+        // Names
+        if(visibleCols.includes('picName'))row['Name of PIC']=f.picName;
+        if(visibleCols.includes('sicName'))row['Name of SIC']=f.sicName;
+        if(visibleCols.includes('otherCrew')&&hasOtherCrew)row['Additional Crew Member(s)']=f.otherCrew;
+        
+        if(visibleCols.includes('IFR Time'))row['IFR Time']=f['IFR Time'];
+        if(visibleCols.includes('Day Flight'))row['Day Flight']=f['Day Flight'];
+        if(visibleCols.includes('Night'))row['Night']=f['Night'];
+        if(visibleCols.includes('rightSeat'))row['Right Seat Time']=f.rightSeat?t:'';
+        if(visibleCols.includes('ltc'))row['Line Training Captain (LTC) Time']=f.ltc?t:'';
+        if(visibleCols.includes('Takeoffs (any)'))row['Takeoffs (any)']=f['Takeoffs (any)']||'';
+        if(visibleCols.includes('Landings'))row['Landings']=f['Landings']||'';
+        if(visibleCols.includes('ETOPS Flight'))row['ETOPS Flight']=f['ETOPS Flight']||'';
+        row['Employer Name']=f['Employer Name'];
+        row['Nose Number']=f['Nose Number'];
+        if(visibleCols.includes('flightNumber'))row['Flight Number']=f.flightNumber;
+        
+        if(hasRP)row['Relief Pilot Time']=isRP?t:'';
+        
+        // Optional fields
+        optFields.forEach(k=>{
+            if(!hiddenCols.has(k))row[k]=f.opt[k]||'';
+        });
+        
+        // Comments always last
+        if(visibleCols.includes('Comments'))row['Comments']=f.Comments||'';
+        
+        return row;
+    });
+    
+    const hds=Object.keys(csvData[0]);
+    previewHead.innerHTML='<tr>'+hds.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+    previewBody.innerHTML=csvData.map(r=>'<tr>'+hds.map(h=>{
+        let v=r[h],s=v==='Self'?'color:var(--purple);font-weight:500':/^\d+\.?\d*$/.test(v)&&v?'color:var(--green)':v==='Yes'?'color:var(--blue)':'';
+        return `<td style="${s}">${v}</td>`;
+    }).join('')+'</tr>').join('');
+    previewCount.textContent=csvData.length;goToStep(3);
+}
+
+function downloadCSV(){
+    if(!csvData.length){showStatus('No data.','error');return}
+    const hds=Object.keys(csvData[0]);
+    const lines=[hds.join(','),...csvData.map(r=>hds.map(h=>{let v=r[h]??'';v=String(v);if(v.includes(',')||v.includes('"')||v.includes('\n'))v='"'+v.replace(/"/g,'""')+'"';return v}).join(','))];
+    const blob=new Blob([lines.join('\r\n')],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='myflightbook_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();URL.revokeObjectURL(a.href);showStatus('Downloaded!','success');
+}
+
+function convDate(d){const m={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};const x=d.replace(/\s+/g,' ').trim().match(/([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4})/);return x?m[x[1].toLowerCase()]+'/'+parseInt(x[2])+'/'+x[3]:d}
+function fmtTail(r){r=r.replace(/-/g,'').trim().toUpperCase();return r.startsWith('C')&&r.length>1?'C-'+r.substring(1):r}
+function extNose(f){const m=f.match(/\d+/);return m?m[0]:f}
+function cleanFlt(f){return f.replace(/^#\s*/,'').trim()}
+function goToStep(s){document.querySelectorAll('.step').forEach((e,i)=>{e.classList.remove('active','completed');if(i+1<s)e.classList.add('completed');if(i+1===s)e.classList.add('active')});document.querySelectorAll('.section').forEach((e,i)=>e.classList.toggle('active',i+1===s))}
+function showStatus(m,t){statusMsg.innerHTML=`<div class="status status-${t}">${m}</div>`;if(t==='success')setTimeout(()=>statusMsg.innerHTML='',3000)}
+</script>
+</body>
+</html>
