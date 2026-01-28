@@ -127,6 +127,8 @@
         .err-badge{background:rgba(220,38,38,.2);border:1px solid var(--red);color:var(--red)}
         .info-badge{background:rgba(6,182,212,.15);border:1px solid var(--cyan);color:var(--cyan)}
         .unmapped-badge{background:rgba(139,92,246,.15);border:1px solid var(--purple);color:var(--purple);font-size:.4rem}
+        .rp-badge{background:rgba(234,179,8,.2);border:1px solid var(--yellow);color:var(--yellow)}
+        .assumed-rp{background:rgba(234,179,8,.03)}
         .stats-row{display:flex;gap:.25rem;flex-wrap:wrap;margin-top:.3rem;padding-top:.3rem;border-top:1px solid var(--border)}
         .stat-box{background:var(--bg2);padding:.2rem .3rem;border-radius:3px;min-width:45px}
         .stat-label{font-size:.45rem;color:var(--muted);text-transform:uppercase}
@@ -167,8 +169,8 @@
         .selected-tag .reorder-btn:hover{color:var(--blue)}
         .section{display:none}.section.active{display:block}
         .preview-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.2rem}
-        .row-count,.dup-count,.err-count{padding:.06rem .25rem;border-radius:999px;font-size:.5rem;font-weight:600;color:#fff}
-        .row-count{background:var(--blue)}.dup-count{background:var(--orange)}.err-count{background:var(--red)}
+        .row-count,.dup-count,.err-count,.rp-count{padding:.06rem .25rem;border-radius:999px;font-size:.5rem;font-weight:600;color:#fff}
+        .row-count{background:var(--blue)}.dup-count{background:var(--orange)}.err-count{background:var(--red)}.rp-count{background:var(--yellow);color:#000}
         footer{text-align:center;padding:.5rem;color:var(--muted);font-size:.5rem;border-top:1px solid var(--border);margin-top:.4rem}
         footer a{color:var(--blue);text-decoration:none}
         .hidden{display:none!important}
@@ -259,6 +261,7 @@
                     <span class="row-count" id="flightCount">0</span>
                     <span class="dup-count" id="dupCount" style="display:none">0</span>
                     <span class="err-count" id="errCount" style="display:none">0</span>
+                    <span class="rp-count" id="rpCount" style="display:none">0</span>
                 </div>
                 <div class="toolbar">
                     <button class="btn btn-small btn-secondary" id="addBtn">+ Add</button>
@@ -266,6 +269,8 @@
                     <div class="toolbar-sep"></div>
                     <button class="btn btn-small btn-secondary" id="allPicBtn">All PIC</button>
                     <button class="btn btn-small btn-secondary" id="allSicBtn">All SIC</button>
+                    <button class="btn btn-small btn-secondary" id="allRpBtn">All RP</button>
+                    <button class="btn btn-small btn-secondary" id="confirmRpBtn" style="display:none;color:var(--yellow)" title="Confirm all flights marked as assumed RP">Confirm RP?</button>
                     <div class="toolbar-sep"></div>
                     <div class="dropdown" id="colDropdown">
                         <button class="btn btn-small btn-secondary" id="colDropdownBtn">+ Columns</button>
@@ -501,7 +506,7 @@ pilotDetection=$('pilotDetection'),pilotNameInput=$('pilotName'),pilotNameManual
 statusMsg=$('statusMessage'),employer=$('employer'),selfToggle=$('selfToggle'),
 processBtn=$('processBtn'),manualStartBtn=$('manualStartBtn'),
 flightsHead=$('flightsHead'),flightsBody=$('flightsBody'),flightCount=$('flightCount'),
-dupCount=$('dupCount'),errCount=$('errCount'),statsRow=$('statsRow'),
+dupCount=$('dupCount'),errCount=$('errCount'),rpCount=$('rpCount'),statsRow=$('statsRow'),
 categoryTabs=$('categoryTabs'),fieldsGrid=$('fieldsGrid'),tableScroll=$('tableScroll'),
 selectedFields=$('selectedFields'),fieldSearch=$('fieldSearch'),previewHead=$('previewHead'),
 previewBody=$('previewBody'),previewCount=$('previewCount'),
@@ -607,8 +612,10 @@ function scrollToCell(row,col){
         if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
     },10);
 }
-$('allPicBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='PIC';updatePilotNames(f)});renderTable()});
-$('allSicBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='SIC';updatePilotNames(f)});renderTable()});
+$('allPicBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='PIC';f.assumedRP=false;updatePilotNames(f)});renderTable()});
+$('allSicBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='SIC';f.assumedRP=false;updatePilotNames(f)});renderTable()});
+$('allRpBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='RP';f.assumedRP=false;updatePilotNames(f)});renderTable()});
+$('confirmRpBtn').addEventListener('click',()=>{flights.forEach(f=>{if(f.assumedRP)f.assumedRP=false});renderTable();showStatus('All assumed RP flights confirmed.','success')});
 $('backBtn1').addEventListener('click',()=>goToStep(1));
 $('previewBtn').addEventListener('click',generatePreview);
 $('backBtn2').addEventListener('click',()=>goToStep(2));
@@ -729,6 +736,7 @@ flightsBody.addEventListener('click',e=>{
     if(rb){
         const i=parseInt(rb.dataset.i);
         flights[i].role=rb.dataset.r;
+        flights[i].assumedRP=false; // User confirmed the role
         updatePilotNames(flights[i]);
         renderTable();
     }
@@ -765,6 +773,7 @@ flightsBody.addEventListener('keydown',e=>{
         const curIdx=roles.indexOf(flights[i].role);
         const newIdx=e.key==='ArrowRight'?(curIdx+1)%3:(curIdx+2)%3;
         flights[i].role=roles[newIdx];
+        flights[i].assumedRP=false; // User confirmed the role
         updatePilotNames(flights[i]);
         // Update just the role buttons and pilot name cells without full re-render
         const btns=flightsBody.querySelectorAll(`.role-toggle button[data-i="${i}"]`);
@@ -815,7 +824,7 @@ function startManualEntry(){
     flights=[createEmptyFlight()];goToStep(2);renderTable();
 }
 function createEmptyFlight(){
-    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':'','Landings':'','ETOPS Flight':'',role:'PIC',rightSeat:false,ltc:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
+    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':'','Landings':'','ETOPS Flight':'',role:'PIC',assumedRP:false,rightSeat:false,ltc:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
     updatePilotNames(f);
     return f;
 }
@@ -850,6 +859,7 @@ function parseFileRaw(c){
         const pic=(col[5]||'').trim(),sic=(col[6]||'').trim(),crew=(col[7]||'').trim(),type=(col[1]||'').trim();
         if(pic)pilotCounts[pic]=(pilotCounts[pic]||0)+1;
         if(sic)pilotCounts[sic]=(pilotCounts[sic]||0)+1;
+        if(crew)pilotCounts[crew]=(pilotCounts[crew]||0)+1;
         rawFlights.push({dateStr:ds,type,reg:(col[2]||'').trim(),fin:(col[3]||'').trim(),fltNum:(col[4]||'').trim(),picNameRaw:pic,sicNameRaw:sic,otherCrew:crew,from:(col[8]||'').trim(),to:(col[10]||'').trim(),ifrTime:(col[12]||'').trim(),dayTime:(col[14]||'').trim(),nightTime:(col[15]||'').trim(),takeoffFlag:(col[20]||'').trim().toUpperCase(),landingFlag:(col[21]||'').trim().toUpperCase(),rightSeatFlag:(col[22]||'').trim().toUpperCase(),etopsFlag:(col[23]||'').trim().toUpperCase()});
     }
 }
@@ -859,11 +869,20 @@ function processAllFiles(){
     flights=[];
     rawFlights.forEach(rf=>{
         const dt=convDate(rf.dateStr);
+        // Determine role: PIC > SIC > RP (in Other Crew) > Assumed RP (not listed)
         const iAmPic=rf.picNameRaw.trim()===myName;
+        const iAmSic=rf.sicNameRaw.trim()===myName;
+        const iAmOtherCrew=rf.otherCrew.trim()===myName;
+        let role='RP',assumedRP=false;
+        if(iAmPic)role='PIC';
+        else if(iAmSic)role='SIC';
+        else if(iAmOtherCrew)role='RP';
+        else{role='RP';assumedRP=true;} // Not listed anywhere - assume RP
+
         const otherPilot=iAmPic?rf.sicNameRaw:rf.picNameRaw;
         const totalMins=parseTimeToMinutes(rf.ifrTime||rf.dayTime),dayMins=parseTimeToMinutes(rf.dayTime),nightMins=parseTimeToMinutes(rf.nightTime);
         const mr=normalizeModel(rf.type),model=typeof mr==='object'?mr.model:mr,unmapped=typeof mr==='object'&&mr.unmapped;
-        
+
         const f={
             sortDate:dt,Date:dt,flightNumber:cleanFlt(rf.fltNum),From:rf.from,To:rf.to,
             'Tail Number':fmtTail(rf.reg),Model:model,modelUnmapped:unmapped,
@@ -874,7 +893,7 @@ function processAllFiles(){
             'IFR Time':minutesToDisplay(parseTimeToMinutes(rf.ifrTime)),
             'Takeoffs (any)':rf.takeoffFlag==='Y'?1:'','Landings':rf.landingFlag==='Y'?1:'',
             'ETOPS Flight':rf.etopsFlag==='Y'?'Yes':'',
-            role:iAmPic?'PIC':'SIC',rightSeat:rf.rightSeatFlag==='Y',ltc:false,
+            role:role,assumedRP:assumedRP,rightSeat:rf.rightSeatFlag==='Y',ltc:false,
             // Store originals for swapping
             origPicName:rf.picNameRaw,origSicName:rf.sicNameRaw,
             origOtherPilot:otherPilot,origOtherCrew:rf.otherCrew,
@@ -887,7 +906,10 @@ function processAllFiles(){
     if(!flights.length){showStatus('No flights found.','error');return}
     flights.sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate));
     detectDups();validateAllTimes();
-    showStatus(`Loaded ${flights.length} flights.`,flights.some(f=>f.isDup||f.hasTimeError)?'warning':'success');
+    const hasAssumedRP=flights.some(f=>f.assumedRP);
+    let msg=`Loaded ${flights.length} flights.`;
+    if(hasAssumedRP)msg+=` ${flights.filter(f=>f.assumedRP).length} flight(s) marked as assumed RP - please verify.`;
+    showStatus(msg,flights.some(f=>f.isDup||f.hasTimeError||f.assumedRP)?'warning':'success');
     setTimeout(()=>{goToStep(2);renderTable()},300);
 }
 function detectDups(){const m=new Map();flights.forEach(f=>{const k=f.Date+'_'+f.flightNumber+'_'+f.From+'_'+f.To;if(m.has(k)){f.isDup=true;m.get(k).isDup=true}else m.set(k,f)})}
@@ -984,11 +1006,12 @@ function renderTable(){
     flights.forEach((f,i)=>{
         // Update pilot names in case showSelf changed
         updatePilotNames(f);
-        let cls=f.hasTimeError?'time-error':f.hasRoundingNotice?'rounding-notice':f.isDup?'duplicate':'';
+        let cls=f.hasTimeError?'time-error':f.hasRoundingNotice?'rounding-notice':f.isDup?'duplicate':f.assumedRP?'assumed-rp':'';
         b+=`<tr class="${cls}"><td class="sticky-col">`;
         if(f.hasTimeError)b+='<span class="badge err-badge">ERR</span>';
         else if(f.hasRoundingNotice)b+='<span class="badge info-badge">~</span>';
         else if(f.isDup)b+='<span class="badge dup-badge">DUP</span>';
+        else if(f.assumedRP)b+='<span class="badge rp-badge" title="Not listed as PIC/SIC/Other Crew - assumed Relief Pilot">RP?</span>';
         b+=`${i+1}</td>`;
         cols.forEach((c,ci)=>{
             const isSelected=selectedCell.row===i&&selectedCell.col===ci;
@@ -998,9 +1021,11 @@ function renderTable(){
     });
     flightsBody.innerHTML=b;
     flightCount.textContent=flights.length;
-    const dc=flights.filter(x=>x.isDup).length,ec=flights.filter(x=>x.hasTimeError).length;
+    const dc=flights.filter(x=>x.isDup).length,ec=flights.filter(x=>x.hasTimeError).length,rc=flights.filter(x=>x.assumedRP).length;
     dupCount.style.display=dc?'inline':'none';dupCount.textContent=dc+' dup';
     errCount.style.display=ec?'inline':'none';errCount.textContent=ec+' err';
+    rpCount.style.display=rc?'inline':'none';rpCount.textContent=rc+' RP?';
+    $('confirmRpBtn').style.display=rc?'inline-block':'none';
     updateStats();renderSelFields();
 }
 
