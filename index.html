@@ -521,25 +521,28 @@ const CATS={
 };
 
 // Base columns - PIC, SIC names derived; Comments always last
+// Column order matches export CSV order
 const BASE_COLS=[
 {k:'Date',l:'Date',t:'date',deletable:false},
-{k:'flightNumber',l:'Flt#',t:'text',deletable:true},
-{k:'From',l:'From',t:'text',deletable:false},
-{k:'To',l:'To',t:'text',deletable:false},
 {k:'Tail Number',l:'Tail#',t:'text',deletable:true},
 {k:'Model',l:'Model',t:'text',deletable:true},
-{k:'picName',l:'PIC',t:'text',deletable:true},
-{k:'sicName',l:'SIC',t:'text',deletable:true},
-{k:'otherCrew',l:'Other Crew',t:'text',deletable:true},
 {k:'Total Flight Time',l:'Total',t:'num',isTime:true,deletable:false},
+{k:'From',l:'From',t:'text',deletable:false},
+{k:'To',l:'To',t:'text',deletable:false},
+{k:'role',l:'Role',t:'toggle',deletable:false},
+{k:'picName',l:'PIC Name',t:'text',deletable:true},
+{k:'sicName',l:'SIC Name',t:'text',deletable:true},
+{k:'otherCrew',l:'Other Crew',t:'text',deletable:true},
+{k:'IFR Time',l:'IFR',t:'num',deletable:true},
 {k:'Day Flight',l:'Day',t:'num',isTime:true,deletable:true},
 {k:'Night',l:'Night',t:'num',isTime:true,deletable:true},
-{k:'IFR Time',l:'IFR',t:'num',deletable:true},
-{k:'role',l:'Role',t:'toggle',deletable:false},
+{k:'rightSeat',l:'RSeat',t:'cb',deletable:true},
 {k:'Takeoffs (any)',l:'T/O',t:'cb',deletable:true},
 {k:'Landings',l:'Ldg',t:'num',deletable:true},
-{k:'rightSeat',l:'RSeat',t:'cb',deletable:true},
-{k:'ETOPS Flight',l:'ETOPS',t:'yn',deletable:true}
+{k:'ETOPS Flight',l:'ETOPS',t:'yn',deletable:true},
+{k:'Employer Name',l:'Employer',t:'text',deletable:true},
+{k:'Nose Number',l:'Nose#',t:'text',deletable:true},
+{k:'flightNumber',l:'Flt#',t:'text',deletable:true}
 ];
 
 let files=[],rawFlights=[],flights=[],optFields=[],activeCat='Time',showSelf=true,csvData=[],customLabels={};
@@ -1297,37 +1300,41 @@ function generatePreview(){
         const t=f['Total Flight Time']||'';
         const isPIC=f.role==='PIC',isSIC=f.role==='SIC',isRP=f.role==='RP';
         const row={};
-        
-        // Only include non-hidden columns
+
+        // Column order matches BASE_COLS order
         if(visibleCols.includes('Date'))row['Date']=f.Date;
         if(visibleCols.includes('Tail Number'))row['Tail Number']=f['Tail Number'];
         if(visibleCols.includes('Model'))row['Model']=f.Model||'';
         row['Total Flight Time']=t;
         if(visibleCols.includes('From'))row['From']=f.From;
         if(visibleCols.includes('To'))row['To']=f.To;
-        
-        // PIC/SIC time
+
+        // PIC/SIC/RP time (derived from role)
         row['PIC']=isPIC?t:'';
         row['SIC']=isSIC?t:'';
-        
+        if(hasRP)row['Relief Pilot Time']=isRP?t:'';
+
         // Names
         if(visibleCols.includes('picName'))row['Name of PIC']=f.picName;
         if(visibleCols.includes('sicName'))row['Name of SIC']=f.sicName;
         if(visibleCols.includes('otherCrew')&&hasOtherCrew)row['Additional Crew Member(s)']=f.otherCrew;
-        
+
+        // Time fields
         if(visibleCols.includes('IFR Time'))row['IFR Time']=f['IFR Time'];
         if(visibleCols.includes('Day Flight'))row['Day Flight']=f['Day Flight'];
         if(visibleCols.includes('Night'))row['Night']=f['Night'];
         if(visibleCols.includes('rightSeat'))row['Right Seat Time']=f.rightSeat?t:'';
+
+        // Counts
         if(visibleCols.includes('Takeoffs (any)'))row['Takeoffs (any)']=f['Takeoffs (any)']?1:'';
         if(visibleCols.includes('Landings'))row['Landings']=f['Landings']||'';
+
+        // Operations
         if(visibleCols.includes('ETOPS Flight'))row['ETOPS Flight']=f['ETOPS Flight']||'';
-        row['Employer Name']=f['Employer Name'];
-        row['Nose Number']=f['Nose Number'];
+        if(visibleCols.includes('Employer Name'))row['Employer Name']=f['Employer Name'];
+        if(visibleCols.includes('Nose Number'))row['Nose Number']=f['Nose Number'];
         if(visibleCols.includes('flightNumber'))row['Flight Number']=f.flightNumber;
-        
-        if(hasRP)row['Relief Pilot Time']=isRP?t:'';
-        
+
         // Optional fields
         optFields.forEach(k=>{
             if(!hiddenCols.has(k)){
@@ -1336,10 +1343,10 @@ function generatePreview(){
                 else row[k]=f.opt[k]||'';
             }
         });
-        
+
         // Comments always last
         if(visibleCols.includes('Comments'))row['Comments']=f.Comments||'';
-        
+
         return row;
     });
     
