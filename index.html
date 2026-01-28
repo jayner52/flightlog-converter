@@ -170,6 +170,7 @@
         .err-badge{background:rgba(220,38,38,.15);border:1px solid var(--red);color:var(--red)}
         .info-badge{background:rgba(6,182,212,.12);border:1px solid var(--cyan);color:var(--cyan)}
         .unmapped-badge{background:rgba(139,92,246,.12);border:1px solid var(--purple);color:var(--purple);font-size:.5rem}
+        .conflict-badge{background:rgba(249,115,22,.15);border:1px solid var(--orange);color:var(--orange);font-size:.5rem}
         .rp-badge{background:rgba(234,179,8,.15);border:1px solid var(--yellow);color:var(--yellow)}
         .assumed-rp{background:rgba(234,179,8,.05)}
         .stats-row{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)}
@@ -411,8 +412,300 @@ function doUndo(){
     showStatus('Undone','success');
 }
 
-const MODEL_MAP={'l319':'A320','l-319':'A320','l 319':'A320','l320':'A320','l-320':'A320','l 320':'A320','l321':'A320','l-321':'A320','l 321':'A320','a319':'A320','a320':'A320','a321':'A320','319':'A320','320':'A320','321':'A320','l330':'A330','l-330':'A330','l 330':'A330','a330':'A330','330':'A330','l350':'A350','l-350':'A350','l 350':'A350','a350':'A350','350':'A350','b737':'B737','b-737':'B737','737':'B737','737max':'B737','7m8':'B737','7m9':'B737','b777':'B777','777':'B777','77l':'B777','77w':'B777','b787':'B787','787':'B787','788':'B787','789':'B787','e175':'E175','e190':'E190','crj':'CRJ','q400':'Q400'};
+const MODEL_MAP={'l319':'A320','l-319':'A320','l 319':'A320','l320':'A320','l-320':'A320','l 320':'A320','l321':'A320','l-321':'A320','l 321':'A320','a319':'A320','a320':'A320','a321':'A320','319':'A320','320':'A320','321':'A320','l330':'A330','l-330':'A330','l 330':'A330','a330':'A330','330':'A330','l350':'A350','l-350':'A350','l 350':'A350','a350':'A350','350':'A350','b737':'B737','b-737':'B737','737':'B737','737max':'B737','7m8':'B737','7m9':'B737','b767':'B767','767':'B767','b777':'B777','777':'B777','77l':'B777','77w':'B777','b787':'B787','787':'B787','788':'B787','789':'B787','e175':'E175','e190':'E190','crj':'CRJ','q400':'Q400'};
 function normalizeModel(t){if(!t)return'';const n=t.toLowerCase().replace(/[\s\-]+/g,'');if(MODEL_MAP[n])return MODEL_MAP[n];for(const[k,v]of Object.entries(MODEL_MAP))if(n.includes(k)||k.includes(n))return v;return{model:t.trim().toUpperCase(),unmapped:true}}
+
+// ==================== AIRCRAFT CATALOG ====================
+// Air Canada fleet data from FCOM/AOM appendix cross-reference tables
+// Provides specific variant lookup by registration, fin, or nose number
+
+const AIRCRAFT_CATALOG_RAW = [
+// A319 Fleet
+{fin:'0251',reg:'C-FYNS',msn:'00572',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0252',reg:'C-FYIY',msn:'00634',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0255',reg:'C-FYJE',msn:'00656',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0256',reg:'C-FYJG',msn:'00670',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0257',reg:'C-FYJH',msn:'00672',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0258',reg:'C-FYJI',msn:'00682',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0259',reg:'C-FYJP',msn:'00688',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0260',reg:'C-FYKC',msn:'00691',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0262',reg:'C-FYKW',msn:'00695',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0263',reg:'C-FZUG',msn:'00697',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0272',reg:'C-GARJ',msn:'00752',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0273',reg:'C-GARO',msn:'00757',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0276',reg:'C-GBHO',msn:'00779',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0277',reg:'C-GBHR',msn:'00785',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0278',reg:'C-GBHY',msn:'00800',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0279',reg:'C-GBHZ',msn:'00813',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0280',reg:'C-GBIA',msn:'00817',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0281',reg:'C-GBIJ',msn:'00829',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0283',reg:'C-GBIM',msn:'00840',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0284',reg:'C-GBIN',msn:'00845',variant:'A319',family:'A320',sub:'319-114'},
+{fin:'0286',reg:'C-GITP',msn:'01562',variant:'A319',family:'A320',sub:'319-112'},
+{fin:'0287',reg:'C-GITR',msn:'01577',variant:'A319',family:'A320',sub:'319-112'},
+{fin:'0290',reg:'C-GSJB',msn:'01673',variant:'A319',family:'A320',sub:'319-112'},
+// A320 Fleet
+{fin:'0225',reg:'C-FKPT',msn:'00324',variant:'A320',family:'A320',sub:'320-211'},
+{fin:'0226',reg:'C-FKOJ',msn:'00330',variant:'A320',family:'A320',sub:'320-211'},
+{fin:'0232',reg:'C-FMSX',msn:'00378',variant:'A320',family:'A320',sub:'320-211'},
+{fin:'0235',reg:'C-GJVT',msn:'01719',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0236',reg:'C-GKOD',msn:'01864',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0237',reg:'C-GKOE',msn:'01874',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0238',reg:'C-FZUB',msn:'01940',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0239',reg:'C-FXCD',msn:'02018',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0240',reg:'C-FZQS',msn:'02145',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0241',reg:'C-FGJI',msn:'01787',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0242',reg:'C-FGKH',msn:'01975',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0243',reg:'C-GFCH',msn:'03160',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0244',reg:'C-GFCI',msn:'03286',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0245',reg:'C-GFCP',msn:'03123',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0246',reg:'C-GFDU',msn:'03149',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0247',reg:'C-GFWX',msn:'03304',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0401',reg:'C-GPWG',msn:'00174',variant:'A320',family:'A320',sub:'320-211'},
+{fin:'0402',reg:'C-FPWE',msn:'00175',variant:'A320',family:'A320',sub:'320-211'},
+{fin:'0405',reg:'C-FDCA',msn:'00232',variant:'A320',family:'A320',sub:'320-211'},
+{fin:'0415',reg:'C-FNVU',msn:'00403',variant:'A320',family:'A320',sub:'320-211'},
+{fin:'0416',reg:'C-FNVV',msn:'00404',variant:'A320',family:'A320',sub:'320-211'},
+{fin:'0417',reg:'C-FCQD',msn:'03155',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0418',reg:'C-FCQX',msn:'04948',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0419',reg:'C-FCYX',msn:'05034',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0420',reg:'C-FCZF',msn:'03465',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0421',reg:'C-FCUG',msn:'02708',variant:'A320',family:'A320',sub:'320-214'},
+{fin:'0422',reg:'C-FDGQ',msn:'02770',variant:'A320',family:'A320',sub:'320-214'},
+// A321 Fleet
+{fin:'0451',reg:'C-GITU',msn:'01602',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0452',reg:'C-GITY',msn:'01611',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0453',reg:'C-GIUB',msn:'01623',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0454',reg:'C-GIUE',msn:'01632',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0455',reg:'C-GIUF',msn:'01638',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0456',reg:'C-GJVX',msn:'01726',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0457',reg:'C-GJWD',msn:'01748',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0458',reg:'C-GJWI',msn:'01772',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0459',reg:'C-GJWN',msn:'01783',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0460',reg:'C-GJWO',msn:'01811',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0461',reg:'C-FGKN',msn:'03051',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0462',reg:'C-FGKP',msn:'03884',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0463',reg:'C-FGKZ',msn:'03401',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0464',reg:'C-FJNX',msn:'01691',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0465',reg:'C-GYFM',msn:'05354',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0466',reg:'C-GYFY',msn:'05377',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0467',reg:'C-GYGU',msn:'05328',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0468',reg:'C-FJOK',msn:'06844',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0469',reg:'C-FJOU',msn:'06873',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0470',reg:'C-FJQD',msn:'06884',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0471',reg:'C-FJQH',msn:'06905',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0472',reg:'C-FJQL',msn:'07117',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0473',reg:'C-FLKX',msn:'01299',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0474',reg:'C-FYXF',msn:'05038',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0475',reg:'C-GHPD',msn:'05681',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0476',reg:'C-GHPJ',msn:'05733',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0477',reg:'C-GHQG',msn:'06210',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0478',reg:'C-GHQI',msn:'06232',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0479',reg:'C-GJTH',msn:'07433',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0480',reg:'C-GJTX',msn:'07650',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0481',reg:'C-GKFA',msn:'08104',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0482',reg:'C-GKFB',msn:'08232',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0483',reg:'C-FCEU',msn:'05808',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0484',reg:'C-FFGZ',msn:'05849',variant:'A321',family:'A320',sub:'321-211'},
+{fin:'0301',reg:'C-GXLR',msn:'12696',variant:'A321XLR',family:'A320',sub:'321-271NY'},
+// A330 Fleet
+{fin:'0931',reg:'C-GFAF',msn:'0277',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0932',reg:'C-GFAH',msn:'0279',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0933',reg:'C-GFAJ',msn:'0284',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0934',reg:'C-GFUR',msn:'0344',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0935',reg:'C-GHKR',msn:'0400',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0936',reg:'C-GHKW',msn:'0408',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0937',reg:'C-GHKX',msn:'0412',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0938',reg:'C-GHLM',msn:'0419',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0939',reg:'C-GEFA',msn:'0997',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0940',reg:'C-GEGC',msn:'1006',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0941',reg:'C-GEGI',msn:'1012',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0942',reg:'C-GEGP',msn:'1015',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0943',reg:'C-GHKC',msn:'0986',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0944',reg:'C-GKUG',msn:'1149',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0945',reg:'C-GKUH',msn:'1156',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0946',reg:'C-GOFV',msn:'1447',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0947',reg:'C-GOFW',msn:'1485',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0948',reg:'C-GXZD',msn:'1517',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0949',reg:'C-FDHG',msn:'1427',variant:'A330',family:'A330',sub:'330-343'},
+{fin:'0950',reg:'C-FDHU',msn:'1105',variant:'A330',family:'A330',sub:'330-343'},
+// B767 Fleet
+{fin:'637',reg:'C-FPCA',msn:'24306',variant:'767-300ER',family:'B767',sub:'375ER'},
+{fin:'638',reg:'C-FTCA',msn:'24307',variant:'767-300ER',family:'B767',sub:'375ER'},
+{fin:'639',reg:'C-FXCA',msn:'24574',variant:'767-300ER',family:'B767',sub:'375ER'},
+{fin:'646',reg:'C-GDUZ',msn:'25347',variant:'767-300ER',family:'B767',sub:'38EER'},
+{fin:'660',reg:'C-GHLU',msn:'30851',variant:'767-300ER',family:'B767',sub:'333ER'},
+{fin:'661',reg:'C-GHLV',msn:'30852',variant:'767-300ER',family:'B767',sub:'333ER'},
+{fin:'662',reg:'C-GXHI',msn:'67023',variant:'767-300F',family:'B767',sub:'300FFG'},
+{fin:'663',reg:'C-GXHM',msn:'67024',variant:'767-300F',family:'B767',sub:'300FFG'},
+// B777 Fleet - 777-200LR
+{fin:'701',reg:'C-FIUA',msn:'35239',variant:'777-200LR',family:'B777',sub:'777-233LR'},
+{fin:'702',reg:'C-FIUF',msn:'35243',variant:'777-200LR',family:'B777',sub:'777-233LR'},
+{fin:'703',reg:'C-FIUJ',msn:'35244',variant:'777-200LR',family:'B777',sub:'777-233LR'},
+{fin:'704',reg:'C-FIVK',msn:'35245',variant:'777-200LR',family:'B777',sub:'777-233LR'},
+{fin:'705',reg:'C-FNND',msn:'35246',variant:'777-200LR',family:'B777',sub:'777-233LR'},
+{fin:'706',reg:'C-FNNH',msn:'35247',variant:'777-200LR',family:'B777',sub:'777-233LR'},
+// B777 Fleet - 777-300ER
+{fin:'731',reg:'C-FITL',msn:'35256',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'732',reg:'C-FITU',msn:'35254',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'733',reg:'C-FITW',msn:'35298',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'734',reg:'C-FIUL',msn:'35255',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'735',reg:'C-FIUR',msn:'35242',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'736',reg:'C-FIUV',msn:'35248',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'737',reg:'C-FIUW',msn:'35249',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'738',reg:'C-FIVM',msn:'35251',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'739',reg:'C-FRAM',msn:'35250',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'740',reg:'C-FIVQ',msn:'35240',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'741',reg:'C-FIVR',msn:'35241',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'742',reg:'C-FIVS',msn:'35784',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'743',reg:'C-FIVW',msn:'42218',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'744',reg:'C-FIVX',msn:'42219',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'745',reg:'C-FNNQ',msn:'43251',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'746',reg:'C-FNNU',msn:'43249',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'747',reg:'C-FNNW',msn:'43250',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'748',reg:'C-FJZS',msn:'62400',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+{fin:'749',reg:'C-FKAU',msn:'62401',variant:'777-300ER',family:'B777',sub:'777-333ER'},
+// B787 Fleet - 787-8
+{fin:'801',reg:'C-GHPQ',msn:'35257',variant:'787-8',family:'B787',sub:'787-8'},
+{fin:'802',reg:'C-GHPT',msn:'35258',variant:'787-8',family:'B787',sub:'787-8'},
+{fin:'803',reg:'C-GHPU',msn:'35259',variant:'787-8',family:'B787',sub:'787-8'},
+{fin:'804',reg:'C-GHPV',msn:'35260',variant:'787-8',family:'B787',sub:'787-8'},
+{fin:'805',reg:'C-GHPX',msn:'35261',variant:'787-8',family:'B787',sub:'787-8'},
+{fin:'806',reg:'C-GHPY',msn:'35262',variant:'787-8',family:'B787',sub:'787-8'},
+{fin:'807',reg:'C-GHQQ',msn:'35263',variant:'787-8',family:'B787',sub:'787-8'},
+{fin:'808',reg:'C-GHQY',msn:'35264',variant:'787-8',family:'B787',sub:'787-8'},
+// B787 Fleet - 787-9
+{fin:'831',reg:'C-FNOE',msn:'35265',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'832',reg:'C-FNOG',msn:'35266',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'833',reg:'C-FNOH',msn:'35267',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'834',reg:'C-FNOI',msn:'35268',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'835',reg:'C-FGDT',msn:'37171',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'836',reg:'C-FGDX',msn:'35269',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'837',reg:'C-FGDZ',msn:'37173',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'838',reg:'C-FGEI',msn:'37174',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'839',reg:'C-FGEO',msn:'37180',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'840',reg:'C-FGFZ',msn:'37172',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'841',reg:'C-FPQB',msn:'35270',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'842',reg:'C-FGHZ',msn:'37169',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'843',reg:'C-FKSV',msn:'37170',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'844',reg:'C-FRSA',msn:'37175',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'845',reg:'C-FRSE',msn:'37181',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'846',reg:'C-FRSI',msn:'37176',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'847',reg:'C-FRSO',msn:'37177',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'848',reg:'C-FRSR',msn:'37178',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'849',reg:'C-FRTG',msn:'37184',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'850',reg:'C-FRTU',msn:'37183',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'851',reg:'C-FRTW',msn:'37179',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'852',reg:'C-FSBV',msn:'37182',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'853',reg:'C-FVLQ',msn:'38357',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'854',reg:'C-FVLU',msn:'38360',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'855',reg:'C-FVLX',msn:'38356',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'856',reg:'C-FVLZ',msn:'38358',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'857',reg:'C-FVNB',msn:'38359',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'858',reg:'C-FVND',msn:'38361',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'859',reg:'C-FVNF',msn:'38362',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'860',reg:'C-GWUU',msn:'66991',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'861',reg:'C-GYJW',msn:'66992',variant:'787-9',family:'B787',sub:'787-9'},
+{fin:'862',reg:'C-FEGI',msn:'66993',variant:'787-9',family:'B787',sub:'787-9'}
+];
+
+// Build lookup indexes
+const aircraftCatalog = {byReg:{},byFin:{},byNose:{},entries:AIRCRAFT_CATALOG_RAW};
+function buildCatalogIndexes(){
+    AIRCRAFT_CATALOG_RAW.forEach(ac=>{
+        const regKey=(ac.reg||'').replace(/-/g,'').toUpperCase();
+        const finKey=(ac.fin||'').replace(/^0+/,'');
+        if(regKey)aircraftCatalog.byReg[regKey]=ac;
+        if(finKey){aircraftCatalog.byFin[finKey]=ac;aircraftCatalog.byNose[finKey]=ac;}
+    });
+}
+buildCatalogIndexes();
+
+// Family groupings for UI toggles
+const FAMILY_GROUPS={
+    'A32X':['A319','A320','A321','A321XLR'],
+    'B787':['787-8','787-9'],
+    'B777':['777-200LR','777-300ER'],
+    'B767':['767-300ER','767-300F'],
+    'A330':['A330']
+};
+
+// Model output preferences (user-configurable)
+let modelOutputMode='specific'; // 'generic' or 'specific'
+let familyOutputSettings={A32X:'specific',B787:'specific',B777:'specific',B767:'generic',A330:'generic'};
+
+// Get family group for a variant
+function getFamilyGroup(variant){
+    for(const[group,variants]of Object.entries(FAMILY_GROUPS)){
+        if(variants.includes(variant))return group;
+    }
+    return null;
+}
+
+// Normalize registration for lookup (remove dashes, uppercase)
+function normalizeReg(r){return(r||'').replace(/-/g,'').toUpperCase();}
+
+// Resolve aircraft variant from available identifiers
+function resolveAircraftVariant(identifiers){
+    const{registration,fin,nose,typeCode}=identifiers;
+
+    // Get generic family from type code (existing logic)
+    const genericResult=normalizeModel(typeCode);
+    const genericFamily=typeof genericResult==='object'?genericResult.model:genericResult;
+
+    let resolved=null,source='fallback',conflict=false;
+
+    // Priority 1: Registration lookup
+    if(registration){
+        const regKey=normalizeReg(registration);
+        resolved=aircraftCatalog.byReg[regKey];
+        if(resolved)source='registration';
+    }
+
+    // Priority 2: Nose number lookup
+    if(!resolved&&nose){
+        const noseKey=(nose+'').replace(/^0+/,'');
+        resolved=aircraftCatalog.byNose[noseKey];
+        if(resolved)source='nose';
+    }
+
+    // Priority 3: Fin number lookup
+    if(!resolved&&fin){
+        const finKey=(fin+'').replace(/^0+/,'');
+        resolved=aircraftCatalog.byFin[finKey];
+        if(resolved)source='fin';
+    }
+
+    // Check for conflicts (multiple identifiers resolve to different aircraft)
+    if(registration&&fin){
+        const regResult=aircraftCatalog.byReg[normalizeReg(registration)];
+        const finResult=aircraftCatalog.byFin[(fin+'').replace(/^0+/,'')];
+        if(regResult&&finResult&&regResult.variant!==finResult.variant)conflict=true;
+    }
+
+    return{
+        family:resolved?.family||genericFamily,
+        variant:resolved?.variant||genericFamily,
+        subVariant:resolved?.sub||null,
+        source:source,
+        conflict:conflict,
+        catalogMatch:resolved,
+        originalTypeCode:typeCode
+    };
+}
+
+// Get model string for display/export based on user preferences
+function getModelForOutput(flight){
+    const family=flight._variantInfo?.family||flight.family||flight.Model;
+    const variant=flight._variantInfo?.variant||flight.variant||flight.Model;
+    const group=getFamilyGroup(variant);
+
+    // Check family-specific setting, then global setting
+    const mode=group?familyOutputSettings[group]:modelOutputMode;
+
+    if(mode==='generic')return family;
+    return variant;
+}
 
 const CATS={
 'Time':[
@@ -941,7 +1234,7 @@ function startManualEntry(){
     flights=[createEmptyFlight()];goToStep(2);renderTable();
 }
 function createEmptyFlight(){
-    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':false,'Landings':false,'ETOPS Flight':'',role:'PIC',assumedRP:false,rightSeat:false,origRole:'PIC',origAssumedRP:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
+    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':false,'Landings':false,'ETOPS Flight':'',role:'PIC',assumedRP:false,rightSeat:false,origRole:'PIC',origAssumedRP:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{},_variantInfo:null,family:'',variant:'',variantSource:'',variantConflict:false,originalTypeCode:''};
     updatePilotNames(f);
     return f;
 }
@@ -998,11 +1291,27 @@ function processAllFiles(){
 
         const otherPilot=iAmPic?rf.sicNameRaw:rf.picNameRaw;
         const totalMins=parseTimeToMinutes(rf.ifrTime||rf.dayTime),dayMins=parseTimeToMinutes(rf.dayTime),nightMins=parseTimeToMinutes(rf.nightTime);
-        const mr=normalizeModel(rf.type),model=typeof mr==='object'?mr.model:mr,unmapped=typeof mr==='object'&&mr.unmapped;
+
+        // Resolve aircraft variant using catalog
+        const variantInfo=resolveAircraftVariant({
+            registration:rf.reg,
+            fin:rf.fin,
+            nose:extNose(rf.fin),
+            typeCode:rf.type
+        });
+        const model=getModelForOutput({_variantInfo:variantInfo});
+        const unmapped=variantInfo.source==='fallback';
 
         const f={
             sortDate:dt,Date:dt,flightNumber:cleanFlt(rf.fltNum),From:rf.from,To:rf.to,
             'Tail Number':fmtTail(rf.reg),Model:model,modelUnmapped:unmapped,
+            // Aircraft variant resolution data
+            _variantInfo:variantInfo,
+            family:variantInfo.family,
+            variant:variantInfo.variant,
+            variantSource:variantInfo.source,
+            variantConflict:variantInfo.conflict,
+            originalTypeCode:rf.type,
             'Nose Number':extNose(rf.fin),'Employer Name':employer.value,
             totalMinutes:totalMins,dayMinutes:dayMins,nightMinutes:nightMins,
             'Total Flight Time':minutesToDisplay(totalMins),
@@ -1158,9 +1467,16 @@ function renderCell(f,c,i,isSelected){
     if(c.t==='toggle')return `<td class="center${selClass}"><div class="role-toggle"><button data-i="${i}" data-r="PIC" data-k="role" class="${f.role==='PIC'?'active':''}">PIC</button><button data-i="${i}" data-r="SIC" data-k="role" class="${f.role==='SIC'?'active':''}">SIC</button><button data-i="${i}" data-r="RP" data-k="role" class="${f.role==='RP'?'active':''}">RP</button></div></td>`;
     
     let cls=c.isTime?'cell-time time-cell':['From','To'].includes(c.k)?'cell-route':['picName','sicName','otherCrew'].includes(c.k)?'cell-pilot':c.k==='Model'?'cell-model':'';
-    let extra=c.k==='Model'&&f.modelUnmapped?'<span class="badge unmapped-badge">?</span>':'';
+    let extra='';
+    let displayVal=v;
+    // Special handling for Model column - use variant resolution
+    if(c.k==='Model'){
+        displayVal=getModelForOutput(f)||v||'';
+        if(f.variantConflict)extra+='<span class="badge conflict-badge" title="Identifiers resolved to different variants">!</span>';
+        if(f.variantSource==='fallback')extra+='<span class="badge unmapped-badge" title="No catalog match">?</span>';
+    }
     const optAttr=c.isOpt?'data-opt="1"':'data-opt="0"';
-    return `<td class="${cls}${selClass}"><span class="editable" data-i="${i}" data-k="${c.k}" data-t="${c.t}" ${optAttr}>${v||'&nbsp;'}</span>${extra}</td>`;
+    return `<td class="${cls}${selClass}"><span class="editable" data-i="${i}" data-k="${c.k}" data-t="${c.t}" ${optAttr}>${displayVal||'&nbsp;'}</span>${extra}</td>`;
 }
 
 function startEdit(el,i,k,t,isOpt){
@@ -1327,7 +1643,7 @@ function generatePreview(){
         // Column order matches BASE_COLS order
         if(visibleCols.includes('Date'))row['Date']=f.Date;
         if(visibleCols.includes('Tail Number'))row['Tail Number']=f['Tail Number'];
-        if(visibleCols.includes('Model'))row['Model']=f.Model||'';
+        if(visibleCols.includes('Model'))row['Model']=getModelForOutput(f)||'';
         row['Total Flight Time']=t;
         if(visibleCols.includes('From'))row['From']=f.From;
         if(visibleCols.includes('To'))row['To']=f.To;
