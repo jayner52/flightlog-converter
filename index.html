@@ -319,6 +319,7 @@
                     <button class="btn btn-small btn-secondary" id="allPicBtn">All PIC</button>
                     <button class="btn btn-small btn-secondary" id="allSicBtn">All SIC</button>
                     <button class="btn btn-small btn-secondary" id="allRpBtn">All RP</button>
+                    <button class="btn btn-small btn-secondary" id="resetRolesBtn" title="Reset roles to what was detected from file"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Reset</button>
                     <button class="btn btn-small btn-secondary" id="confirmRpBtn" style="display:none;color:var(--yellow)" title="Confirm all flights marked as assumed RP">Confirm RP?</button>
                     <div class="toolbar-sep"></div>
                     <div class="dropdown" id="colDropdown">
@@ -676,9 +677,10 @@ function scrollToCell(row,col){
         if(tr)tr.scrollIntoView({block:'nearest',behavior:'instant'});
     },10);
 }
-$('allPicBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='PIC';f.assumedRP=false;updatePilotNames(f)});renderTable()});
-$('allSicBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='SIC';f.assumedRP=false;updatePilotNames(f)});renderTable()});
-$('allRpBtn').addEventListener('click',()=>{flights.forEach(f=>{f.role='RP';f.assumedRP=false;updatePilotNames(f)});renderTable()});
+$('allPicBtn').addEventListener('click',()=>{saveUndo();flights.forEach(f=>{f.role='PIC';f.assumedRP=false;updatePilotNames(f)});renderTable()});
+$('allSicBtn').addEventListener('click',()=>{saveUndo();flights.forEach(f=>{f.role='SIC';f.assumedRP=false;updatePilotNames(f)});renderTable()});
+$('allRpBtn').addEventListener('click',()=>{saveUndo();flights.forEach(f=>{f.role='RP';f.assumedRP=false;updatePilotNames(f)});renderTable()});
+$('resetRolesBtn').addEventListener('click',()=>{saveUndo();flights.forEach(f=>{f.role=f.origRole;f.assumedRP=f.origAssumedRP;updatePilotNames(f)});renderTable();showStatus('Roles reset to file values.','success')});
 $('confirmRpBtn').addEventListener('click',()=>{flights.forEach(f=>{if(f.assumedRP)f.assumedRP=false});renderTable();showStatus('All assumed RP flights confirmed.','success')});
 $('backBtn1').addEventListener('click',()=>goToStep(1));
 $('previewBtn').addEventListener('click',generatePreview);
@@ -927,7 +929,7 @@ function startManualEntry(){
     flights=[createEmptyFlight()];goToStep(2);renderTable();
 }
 function createEmptyFlight(){
-    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':false,'Landings':'','ETOPS Flight':'',role:'PIC',assumedRP:false,rightSeat:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
+    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':false,'Landings':'','ETOPS Flight':'',role:'PIC',assumedRP:false,rightSeat:false,origRole:'PIC',origAssumedRP:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
     updatePilotNames(f);
     return f;
 }
@@ -997,7 +999,8 @@ function processAllFiles(){
             'Takeoffs (any)':rf.takeoffFlag==='Y','Landings':rf.landingFlag==='Y'?1:'',
             'ETOPS Flight':rf.etopsFlag==='Y'?'Yes':'',
             role:role,assumedRP:assumedRP,rightSeat:rf.rightSeatFlag==='Y',ltc:false,
-            // Store originals for swapping
+            // Store originals for swapping and reset
+            origRole:role,origAssumedRP:assumedRP,
             origPicName:rf.picNameRaw,origSicName:rf.sicNameRaw,
             origOtherPilot:otherPilot,origOtherCrew:rf.otherCrew,
             picName:'',sicName:'',otherCrew:'',
