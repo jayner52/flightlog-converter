@@ -212,6 +212,16 @@
         .catalog-table td{padding:.35rem .5rem;border-bottom:1px solid var(--border);font-family:'SF Mono',Monaco,monospace}
         .catalog-table tr:hover td{background:var(--hover)}
         .modal-footer{padding:.5rem 1rem;border-top:1px solid var(--border);font-size:.7rem;color:var(--muted)}
+        .feedback-form{padding:1rem}
+        .feedback-field{margin-bottom:.75rem}
+        .feedback-field label{display:block;font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:.3rem}
+        .feedback-field input,.feedback-field select,.feedback-field textarea{width:100%;padding:.5rem .6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.8rem;font-family:inherit;transition:border-color .15s}
+        .feedback-field input:focus,.feedback-field select:focus,.feedback-field textarea:focus{outline:none;border-color:var(--primary)}
+        .feedback-field textarea{resize:vertical;min-height:80px}
+        .feedback-actions{display:flex;justify-content:flex-end;margin-top:1rem}
+        .feedback-status{margin-top:.75rem;padding:.5rem .75rem;border-radius:6px;font-size:.8rem;text-align:center}
+        .feedback-status.success{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+        .feedback-status.error{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
         .optional-panel{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)}
         .optional-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:.35rem}
         .optional-header h4{font-size:.8rem;color:var(--text);font-weight:600}
@@ -444,14 +454,50 @@
                 </div>
             </div>
         </div>
+        <!-- Feedback Modal -->
+        <div class="modal-overlay" id="feedbackModal" style="display:none">
+            <div class="modal" style="max-width:450px">
+                <div class="modal-header">
+                    <h3><svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Send Feedback</h3>
+                    <button class="modal-close" id="closeFeedbackBtn"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>
+                <form id="feedbackForm" class="feedback-form">
+                    <div class="feedback-field">
+                        <label for="feedbackType">Type</label>
+                        <select id="feedbackType" name="type" required>
+                            <option value="">Select type...</option>
+                            <option value="Bug Report">Bug Report</option>
+                            <option value="Missing Aircraft">Missing Aircraft</option>
+                            <option value="Feature Request">Feature Request</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="feedback-field" id="aircraftField" style="display:none">
+                        <label for="feedbackAircraft">Aircraft Info</label>
+                        <input type="text" id="feedbackAircraft" name="aircraft" placeholder="Registration, fin #, or description...">
+                    </div>
+                    <div class="feedback-field">
+                        <label for="feedbackDetails">Details <span style="color:var(--red)">*</span></label>
+                        <textarea id="feedbackDetails" name="details" required rows="4" placeholder="Please describe your feedback..."></textarea>
+                    </div>
+                    <div class="feedback-field">
+                        <label for="feedbackEmail">Email <span style="color:var(--muted);font-weight:400">(optional, for follow-up)</span></label>
+                        <input type="email" id="feedbackEmail" name="email" placeholder="your@email.com">
+                    </div>
+                    <div class="feedback-actions">
+                        <button type="submit" class="btn btn-primary" id="feedbackSubmitBtn">Send Feedback</button>
+                    </div>
+                    <div id="feedbackStatus" class="feedback-status" style="display:none"></div>
+                </form>
+            </div>
+        </div>
         <footer>
-            <div style="margin-bottom:.35rem;display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="var(--primary)"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg> FlightLog Converter v9.3</div>
-            <div style="display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> All data processed locally in your browser &bull; <a href="https://myflightbook.com/logbook/mvc/pub/ImportTable" target="_blank">MyFlightBook Docs</a></div>
+            <div style="margin-bottom:.35rem;display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="var(--primary)"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg> FlightLog Converter</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> All data processed locally in your browser &bull; <a href="https://myflightbook.com/logbook/mvc/pub/ImportTable" target="_blank">MyFlightBook Docs</a> &bull; <a href="#" id="feedbackBtn" style="color:var(--muted);text-decoration:none" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted)'">Feedback</a></div>
         </footer>
     </div>
 <script>
-const VERSION='9.3';
-const STORAGE_KEY='flightlog_prefs_v9_3';
+const STORAGE_KEY='flightlog_prefs';
 
 // Undo stack
 const undoStack = [];
@@ -1077,6 +1123,67 @@ $('closeCatalogBtn').addEventListener('click',closeCatalogModal);
 $('catalogModal').addEventListener('click',e=>{if(e.target===$('catalogModal'))closeCatalogModal()});
 $('catalogSearch').addEventListener('input',renderCatalogTable);
 $('catalogFamilyFilter').addEventListener('change',renderCatalogTable);
+
+// Feedback modal functions
+function openFeedbackModal(){
+    $('feedbackForm').reset();
+    $('aircraftField').style.display='none';
+    $('feedbackStatus').style.display='none';
+    $('feedbackSubmitBtn').disabled=false;
+    $('feedbackSubmitBtn').textContent='Send Feedback';
+    $('feedbackModal').style.display='flex';
+}
+
+function closeFeedbackModal(){
+    $('feedbackModal').style.display='none';
+}
+
+function handleFeedbackTypeChange(){
+    const type=$('feedbackType').value;
+    $('aircraftField').style.display=type==='Missing Aircraft'?'block':'none';
+}
+
+async function submitFeedback(e){
+    e.preventDefault();
+    const btn=$('feedbackSubmitBtn');
+    const status=$('feedbackStatus');
+
+    btn.disabled=true;
+    btn.textContent='Sending...';
+    status.style.display='none';
+
+    const formData=new FormData($('feedbackForm'));
+
+    try{
+        const response=await fetch('https://formspree.io/f/xlgbkoyn',{
+            method:'POST',
+            body:formData,
+            headers:{'Accept':'application/json'}
+        });
+
+        if(response.ok){
+            status.textContent='Thanks for your feedback!';
+            status.className='feedback-status success';
+            status.style.display='block';
+            btn.textContent='Sent!';
+            setTimeout(closeFeedbackModal,2000);
+        }else{
+            throw new Error('Failed to send');
+        }
+    }catch(err){
+        status.textContent='Failed to send. Please try again.';
+        status.className='feedback-status error';
+        status.style.display='block';
+        btn.disabled=false;
+        btn.textContent='Send Feedback';
+    }
+}
+
+$('feedbackBtn').addEventListener('click',e=>{e.preventDefault();openFeedbackModal()});
+$('closeFeedbackBtn').addEventListener('click',closeFeedbackModal);
+$('feedbackModal').addEventListener('click',e=>{if(e.target===$('feedbackModal'))closeFeedbackModal()});
+$('feedbackType').addEventListener('change',handleFeedbackTypeChange);
+$('feedbackForm').addEventListener('submit',submitFeedback);
 
 $('backBtn1').addEventListener('click',()=>goToStep(1));
 $('previewBtn').addEventListener('click',generatePreview);
