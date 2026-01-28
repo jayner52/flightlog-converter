@@ -95,6 +95,8 @@
         th .col-delete{display:none;position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:.5rem;padding:0 2px}
         th:hover .col-delete{display:inline}
         th .col-delete:hover{color:var(--red)}
+        .header-label{cursor:pointer;border-bottom:1px dashed transparent;transition:border-color .15s}
+        .header-label:hover{border-bottom-color:var(--blue)}
         td{padding:.25rem .2rem;border-bottom:1px solid var(--border);font-family:monospace;font-size:.6rem;white-space:nowrap}
         tr:nth-child(even) td{background:rgba(255,255,255,.015)}
         tr:nth-child(even) td.sticky-col{background:var(--hover)}
@@ -496,7 +498,7 @@ const BASE_COLS=[
 {k:'ETOPS Flight',l:'ETOPS',t:'yn',deletable:true}
 ];
 
-let files=[],rawFlights=[],flights=[],optFields=[],activeCat='Time',showSelf=true,csvData=[];
+let files=[],rawFlights=[],flights=[],optFields=[],activeCat='Time',showSelf=true,csvData=[],customLabels={};
 let detectedPilot='',pilotCounts={},entryMode='upload',hiddenCols=new Set();
 let selectedCell={row:-1,col:-1},currentEdit=null,myName='';
 
@@ -545,10 +547,11 @@ function loadPrefs(){
         if(p.showSelf!==undefined){showSelf=p.showSelf;selfToggle.classList.toggle('active',!showSelf)}
         if(p.hiddenCols)hiddenCols=new Set(p.hiddenCols);
         if(p.optFields)optFields=p.optFields;
+        if(p.customLabels)customLabels=p.customLabels;
     }catch(e){}
 }
 function savePrefs(){
-    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({employer:employer.value,showSelf,hiddenCols:[...hiddenCols],optFields}))}catch(e){}
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({employer:employer.value,showSelf,hiddenCols:[...hiddenCols],optFields,customLabels}))}catch(e){}
 }
 
 modeToggle.addEventListener('click',e=>{
@@ -795,6 +798,35 @@ flightsHead.addEventListener('click',e=>{
         hiddenCols.add(k);
         savePrefs();
         renderTable();
+        return;
+    }
+    const headerLabel=e.target.closest('.header-label');
+    if(headerLabel&&!headerLabel.querySelector('input')){
+        const k=headerLabel.dataset.k;
+        const col=getVisibleCols().find(c=>c.k===k);
+        const currentLabel=customLabels[k]||col.l;
+        const inp=document.createElement('input');
+        inp.type='text';
+        inp.value=currentLabel;
+        inp.className='header-edit-input';
+        inp.style.cssText='width:100%;font-size:inherit;font-weight:inherit;padding:0;border:1px solid var(--blue);background:var(--bg);color:inherit;border-radius:2px;text-align:center';
+        headerLabel.innerHTML='';
+        headerLabel.appendChild(inp);
+        inp.focus();
+        inp.select();
+        const finish=(save)=>{
+            if(save&&inp.value.trim()){
+                if(inp.value.trim()!==col.l)customLabels[k]=inp.value.trim();
+                else delete customLabels[k];
+                savePrefs();
+            }
+            renderTable();
+        };
+        inp.addEventListener('blur',()=>finish(true));
+        inp.addEventListener('keydown',ev=>{
+            if(ev.key==='Enter'){ev.preventDefault();finish(true)}
+            else if(ev.key==='Escape'){ev.preventDefault();finish(false)}
+        });
     }
 });
 
@@ -1008,7 +1040,8 @@ function renderTable(){
     let h='<tr><th class="sticky-col">#</th>';
     cols.forEach(c=>{
         const del=c.deletable!==false?`<button class="col-delete" data-k="${c.k}">×</button>`:'';
-        h+=`<th class="${['cb','toggle','yn'].includes(c.t)?'center':''}">${c.l}${del}</th>`;
+        const label=customLabels[c.k]||c.l;
+        h+=`<th class="${['cb','toggle','yn'].includes(c.t)?'center':''}"><span class="header-label" data-k="${c.k}" title="Click to edit">${label}</span>${del}</th>`;
     });
     h+='<th></th></tr>';flightsHead.innerHTML=h;
     
