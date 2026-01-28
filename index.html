@@ -545,9 +545,9 @@ const BASE_COLS=[
 {k:'IFR Time',l:'IFR',t:'num',deletable:true},
 {k:'Day Flight',l:'Day',t:'num',isTime:true,deletable:true},
 {k:'Night',l:'Night',t:'num',isTime:true,deletable:true},
-{k:'rightSeat',l:'RSeat',t:'cb',deletable:true},
 {k:'Takeoffs (any)',l:'T/O',t:'cb',deletable:true},
-{k:'Landings',l:'Ldg',t:'num',deletable:true},
+{k:'Landings',l:'Ldg',t:'cb',deletable:true},
+{k:'rightSeat',l:'RSeat',t:'cb',deletable:true},
 {k:'ETOPS Flight',l:'ETOPS',t:'yn',deletable:true},
 {k:'Employer Name',l:'Employer',t:'text',deletable:true},
 {k:'Nose Number',l:'Nose#',t:'text',deletable:true},
@@ -817,7 +817,7 @@ flightsBody.addEventListener('change',e=>{
             if(k==='ltc')flights[i].opt[k]=e.target.checked;
             else flights[i].opt[k]=e.target.checked?'Yes':'';
         }
-        else if(k==='rightSeat'||k==='Takeoffs (any)')flights[i][k]=e.target.checked;
+        else if(k==='rightSeat'||k==='Takeoffs (any)'||k==='Landings')flights[i][k]=e.target.checked;
         else flights[i][k]=e.target.checked?'Yes':'';
         updateStats();
     }
@@ -931,7 +931,7 @@ function startManualEntry(){
     flights=[createEmptyFlight()];goToStep(2);renderTable();
 }
 function createEmptyFlight(){
-    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':false,'Landings':'','ETOPS Flight':'',role:'PIC',assumedRP:false,rightSeat:false,origRole:'PIC',origAssumedRP:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
+    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':false,'Landings':false,'ETOPS Flight':'',role:'PIC',assumedRP:false,rightSeat:false,origRole:'PIC',origAssumedRP:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
     updatePilotNames(f);
     return f;
 }
@@ -998,7 +998,7 @@ function processAllFiles(){
             'Total Flight Time':minutesToDisplay(totalMins),
             'Day Flight':minutesToDisplay(dayMins),'Night':minutesToDisplay(nightMins),
             'IFR Time':minutesToDisplay(parseTimeToMinutes(rf.ifrTime)),
-            'Takeoffs (any)':rf.takeoffFlag==='Y','Landings':rf.landingFlag==='Y'?1:'',
+            'Takeoffs (any)':rf.takeoffFlag==='Y','Landings':rf.landingFlag==='Y',
             'ETOPS Flight':rf.etopsFlag==='Y'?'Yes':'',
             role:role,assumedRP:assumedRP,rightSeat:rf.rightSeatFlag==='Y',ltc:false,
             // Store originals for swapping and reset
@@ -1296,7 +1296,7 @@ function updateStats(){
         const t=parseFloat(f['Total Flight Time'])||0;tot+=t;
         if(f.role==='PIC')pic+=t;else if(f.role==='SIC')sic+=t;else if(f.role==='RP')rp+=t;
         day+=parseFloat(f['Day Flight'])||0;ngt+=parseFloat(f['Night'])||0;
-        to+=f['Takeoffs (any)']?1:0;ldg+=parseInt(f['Landings'])||0;
+        to+=f['Takeoffs (any)']?1:0;ldg+=f['Landings']?1:0;
     });
     statsRow.innerHTML=`<div class="stat-box"><div class="stat-label">Total</div><div class="stat-value">${tot.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">PIC</div><div class="stat-value">${pic.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">SIC</div><div class="stat-value">${sic.toFixed(1)}</div></div>${rp?`<div class="stat-box"><div class="stat-label">RP</div><div class="stat-value">${rp.toFixed(1)}</div></div>`:''}<div class="stat-box"><div class="stat-label">Day</div><div class="stat-value">${day.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">Night</div><div class="stat-value">${ngt.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">T/O</div><div class="stat-value">${to}</div></div><div class="stat-box"><div class="stat-label">Ldg</div><div class="stat-value">${ldg}</div></div>`;
 }
@@ -1338,7 +1338,7 @@ function generatePreview(){
 
         // Counts
         if(visibleCols.includes('Takeoffs (any)'))row['Takeoffs (any)']=f['Takeoffs (any)']?1:'';
-        if(visibleCols.includes('Landings'))row['Landings']=f['Landings']||'';
+        if(visibleCols.includes('Landings'))row['Landings']=f['Landings']?1:'';
 
         // Operations
         if(visibleCols.includes('ETOPS Flight'))row['ETOPS Flight']=f['ETOPS Flight']||'';
