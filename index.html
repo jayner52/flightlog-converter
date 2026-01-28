@@ -190,6 +190,35 @@
         .shortcuts-popup{display:none;position:absolute;bottom:100%;left:0;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.75rem;width:240px;z-index:100;margin-bottom:6px;box-shadow:var(--shadow)}
         .shortcuts-popup div{font-size:.8rem;padding:.25rem 0;display:flex;justify-content:space-between}
         .shortcuts-popup kbd{background:var(--bg2);padding:.15rem .35rem;border-radius:4px;font-family:'SF Mono',Monaco,monospace;font-size:.75rem;border:1px solid var(--border)}
+        .model-settings{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.5rem;padding:.5rem .6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px}
+        .model-toggle{display:flex;align-items:center;gap:.4rem}
+        .model-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase}
+        .toggle-pills{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px}
+        .toggle-pills .pill{padding:.2rem .5rem;font-size:.65rem;font-weight:500;border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:3px;transition:all .15s}
+        .toggle-pills .pill.active{background:var(--primary);color:#fff}
+        .toggle-pills .pill:hover:not(.active){background:var(--hover);color:var(--text)}
+        .family-toggles{display:flex;gap:.25rem;flex-wrap:wrap}
+        .family-pill{display:flex;align-items:center;gap:.25rem;padding:.2rem .4rem;font-size:.6rem;font-weight:600;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:4px;cursor:pointer;transition:all .15s}
+        .family-pill:hover{border-color:var(--primary)}
+        .family-pill .family-mode{font-size:.5rem;font-weight:500;padding:.1rem .2rem;border-radius:2px;background:var(--bg2);color:var(--muted)}
+        .family-pill[data-mode="specific"] .family-mode{background:rgba(59,130,246,.15);color:var(--primary)}
+        .family-pill[data-mode="generic"] .family-mode{background:rgba(148,163,184,.15);color:var(--muted)}
+        .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:1000;padding:1rem}
+        .modal{background:var(--card);border:1px solid var(--border);border-radius:10px;width:100%;max-width:700px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+        .modal-header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+        .modal-header h3{font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:.4rem;color:var(--text)}
+        .modal-close{background:none;border:none;color:var(--muted);cursor:pointer;padding:.25rem;border-radius:4px;transition:all .15s}
+        .modal-close:hover{color:var(--red);background:rgba(220,38,38,.1)}
+        .modal-filters{display:flex;gap:.5rem;padding:.5rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .modal-filters input,.modal-filters select{padding:.35rem .5rem;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:.75rem}
+        .modal-filters input{flex:1;min-width:150px}
+        .modal-filters select{min-width:120px}
+        .modal-body{flex:1;overflow:auto;padding:0}
+        .catalog-table{width:100%;border-collapse:collapse;font-size:.7rem}
+        .catalog-table th{background:var(--bg2);padding:.4rem .5rem;text-align:left;font-weight:600;color:var(--text2);font-size:.65rem;text-transform:uppercase;position:sticky;top:0}
+        .catalog-table td{padding:.35rem .5rem;border-bottom:1px solid var(--border);font-family:'SF Mono',Monaco,monospace}
+        .catalog-table tr:hover td{background:var(--hover)}
+        .modal-footer{padding:.5rem 1rem;border-top:1px solid var(--border);font-size:.7rem;color:var(--muted)}
         .optional-panel{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)}
         .optional-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:.35rem}
         .optional-header h4{font-size:.8rem;color:var(--text);font-weight:600}
@@ -315,6 +344,23 @@
                     <span class="err-count" id="errCount" style="display:none">0</span>
                     <span class="rp-count" id="rpCount" style="display:none">0</span>
                 </div>
+                <div class="model-settings" id="modelSettings">
+                    <div class="model-toggle">
+                        <span class="model-label">Model Output:</span>
+                        <div class="toggle-pills" id="modelModePills">
+                            <button class="pill" data-mode="generic">Generic</button>
+                            <button class="pill active" data-mode="specific">Specific</button>
+                        </div>
+                    </div>
+                    <div class="family-toggles" id="familyToggles">
+                        <button class="family-pill" data-family="A32X" data-mode="specific" title="A319/A320/A321">A32X <span class="family-mode">Specific</span></button>
+                        <button class="family-pill" data-family="B787" data-mode="specific" title="787-8/787-9">B787 <span class="family-mode">Specific</span></button>
+                        <button class="family-pill" data-family="B777" data-mode="specific" title="777-200LR/777-300ER">B777 <span class="family-mode">Specific</span></button>
+                        <button class="family-pill" data-family="B767" data-mode="generic" title="767-300ER/767-300F">B767 <span class="family-mode">Generic</span></button>
+                        <button class="family-pill" data-family="A330" data-mode="generic" title="A330-343">A330 <span class="family-mode">Generic</span></button>
+                    </div>
+                    <button class="btn btn-small btn-secondary" id="catalogBtn" title="View aircraft catalog"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Catalog</button>
+                </div>
                 <div class="toolbar">
                     <button class="btn btn-small btn-secondary" id="addBtn">+ Add</button>
                     <button class="btn btn-small btn-secondary" id="clearAllBtn" style="color:var(--red)">Clear All</button>
@@ -385,14 +431,43 @@
                 <div class="btn-row"><button class="btn btn-secondary" id="backBtn2">← Back</button></div>
             </div>
         </div>
+        <!-- Aircraft Catalog Modal -->
+        <div class="modal-overlay" id="catalogModal" style="display:none">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3><svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Aircraft Catalog</h3>
+                    <button class="modal-close" id="closeCatalogBtn"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>
+                <div class="modal-filters">
+                    <input type="text" id="catalogSearch" placeholder="Search registration, fin, variant...">
+                    <select id="catalogFamilyFilter">
+                        <option value="">All Families</option>
+                        <option value="A320">A319/A320/A321</option>
+                        <option value="A330">A330</option>
+                        <option value="B767">B767</option>
+                        <option value="B777">B777</option>
+                        <option value="B787">B787</option>
+                    </select>
+                </div>
+                <div class="modal-body">
+                    <table class="catalog-table">
+                        <thead><tr><th>Reg</th><th>FIN</th><th>Family</th><th>Variant</th><th>Sub-Variant</th><th>MSN</th></tr></thead>
+                        <tbody id="catalogTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <span id="catalogCount">0 aircraft</span>
+                </div>
+            </div>
+        </div>
         <footer>
-            <div style="margin-bottom:.35rem;display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="var(--primary)"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg> FlightLog Converter v9.2</div>
+            <div style="margin-bottom:.35rem;display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="var(--primary)"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg> FlightLog Converter v9.3</div>
             <div style="display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> All data processed locally in your browser &bull; <a href="https://myflightbook.com/logbook/mvc/pub/ImportTable" target="_blank">MyFlightBook Docs</a></div>
         </footer>
     </div>
 <script>
-const VERSION='9.2';
-const STORAGE_KEY='flightlog_prefs_v9_2';
+const VERSION='9.3';
+const STORAGE_KEY='flightlog_prefs_v9_3';
 
 // Undo stack
 const undoStack = [];
@@ -897,10 +972,24 @@ function loadPrefs(){
         if(p.hiddenCols)hiddenCols=new Set(p.hiddenCols);
         if(p.optFields)optFields=p.optFields;
         if(p.customLabels)customLabels=p.customLabels;
+        if(p.modelOutputMode){
+            modelOutputMode=p.modelOutputMode;
+            $('modelModePills').querySelectorAll('.pill').forEach(pl=>pl.classList.toggle('active',pl.dataset.mode===modelOutputMode));
+        }
+        if(p.familyOutputSettings){
+            Object.assign(familyOutputSettings,p.familyOutputSettings);
+            document.querySelectorAll('.family-pill').forEach(fp=>{
+                const fam=fp.dataset.family;
+                if(familyOutputSettings[fam]){
+                    fp.dataset.mode=familyOutputSettings[fam];
+                    fp.querySelector('.family-mode').textContent=familyOutputSettings[fam]==='specific'?'Specific':'Generic';
+                }
+            });
+        }
     }catch(e){}
 }
 function savePrefs(){
-    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({employer:employer.value,showSelf,hiddenCols:[...hiddenCols],optFields,customLabels}))}catch(e){}
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({employer:employer.value,showSelf,hiddenCols:[...hiddenCols],optFields,customLabels,modelOutputMode,familyOutputSettings}))}catch(e){}
 }
 
 modeToggle.addEventListener('click',e=>{
@@ -987,6 +1076,80 @@ $('resetRolesBtn').addEventListener('click',()=>{
     showStatus('All changes reset to original file values.','success');
 });
 $('confirmRpBtn').addEventListener('click',()=>{flights.forEach(f=>{if(f.assumedRP)f.assumedRP=false});renderTable();showStatus('All assumed RP flights confirmed.','success')});
+
+// Model output mode controls
+$('modelModePills').addEventListener('click',e=>{
+    const pill=e.target.closest('.pill');
+    if(!pill)return;
+    const mode=pill.dataset.mode;
+    modelOutputMode=mode;
+    // Update all family settings to match global mode
+    Object.keys(familyOutputSettings).forEach(k=>familyOutputSettings[k]=mode);
+    // Update UI
+    $('modelModePills').querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===mode));
+    document.querySelectorAll('.family-pill').forEach(fp=>{
+        fp.dataset.mode=mode;
+        fp.querySelector('.family-mode').textContent=mode==='specific'?'Specific':'Generic';
+    });
+    // Update flight models and re-render
+    flights.forEach(f=>{f.Model=getModelForOutput(f)});
+    if(flights.length)renderTable();
+    savePrefs();
+});
+
+$('familyToggles').addEventListener('click',e=>{
+    const pill=e.target.closest('.family-pill');
+    if(!pill)return;
+    const family=pill.dataset.family;
+    const currentMode=pill.dataset.mode;
+    const newMode=currentMode==='specific'?'generic':'specific';
+    pill.dataset.mode=newMode;
+    pill.querySelector('.family-mode').textContent=newMode==='specific'?'Specific':'Generic';
+    familyOutputSettings[family]=newMode;
+    // Update flight models for this family and re-render
+    flights.forEach(f=>{f.Model=getModelForOutput(f)});
+    if(flights.length)renderTable();
+    savePrefs();
+});
+
+// Catalog modal functions
+function renderCatalogTable(){
+    const search=($('catalogSearch').value||'').toLowerCase().trim();
+    const familyFilter=$('catalogFamilyFilter').value;
+    const tbody=$('catalogTableBody');
+    tbody.innerHTML='';
+    let count=0;
+    AIRCRAFT_CATALOG_RAW.forEach(ac=>{
+        if(familyFilter&&ac.family!==familyFilter)return;
+        if(search){
+            const searchStr=`${ac.reg} ${ac.fin} ${ac.variant} ${ac.sub} ${ac.msn}`.toLowerCase();
+            if(!searchStr.includes(search))return;
+        }
+        count++;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${ac.reg}</td><td>${ac.fin}</td><td>${ac.family}</td><td>${ac.variant}</td><td>${ac.sub||'-'}</td><td>${ac.msn||'-'}</td>`;
+        tbody.appendChild(tr);
+    });
+    $('catalogCount').textContent=`${count} aircraft`;
+}
+
+function openCatalogModal(){
+    $('catalogSearch').value='';
+    $('catalogFamilyFilter').value='';
+    renderCatalogTable();
+    $('catalogModal').style.display='flex';
+}
+
+function closeCatalogModal(){
+    $('catalogModal').style.display='none';
+}
+
+$('catalogBtn').addEventListener('click',openCatalogModal);
+$('closeCatalogBtn').addEventListener('click',closeCatalogModal);
+$('catalogModal').addEventListener('click',e=>{if(e.target===$('catalogModal'))closeCatalogModal()});
+$('catalogSearch').addEventListener('input',renderCatalogTable);
+$('catalogFamilyFilter').addEventListener('change',renderCatalogTable);
+
 $('backBtn1').addEventListener('click',()=>goToStep(1));
 $('previewBtn').addEventListener('click',generatePreview);
 $('backBtn2').addEventListener('click',()=>goToStep(2));
