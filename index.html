@@ -813,8 +813,14 @@ function updatePilotNames(f){
         f.picName=f.origPicName||'';
         f.sicName=f.origSicName||'';
         // User is other crew when RP
-        const existing=f.origOtherCrew?f.origOtherCrew+', ':'';
-        f.otherCrew=existing+self;
+        // Don't duplicate if pilot is already listed in origOtherCrew
+        if(f.origOtherCrew && f.origOtherCrew.trim()===myName){
+            f.otherCrew=self; // Replace their name with Self display
+        }else if(f.origOtherCrew){
+            f.otherCrew=f.origOtherCrew+', '+self; // Add to existing crew
+        }else{
+            f.otherCrew=self; // No existing crew, just Self
+        }
     }
 }
 
