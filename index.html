@@ -425,6 +425,7 @@ const CATS={
     {k:'Fuel Consumed',l:'Fuel Used',t:'Number'}
 ],
 'Training':[
+    {k:'ltc',l:'LTC',t:'cb',desc:'Line Training Captain'},
     {k:'Flight Review',l:'Flt Review',t:'Yes/No'},
     {k:'Instrument Proficiency Check (IPC) Received',l:'IPC',t:'Yes/No'},
     {k:'Line Check Flight',l:'Line Check',t:'Yes/No'},
@@ -489,10 +490,9 @@ const BASE_COLS=[
 {k:'Night',l:'Night',t:'num',isTime:true,deletable:true},
 {k:'IFR Time',l:'IFR',t:'num',deletable:true},
 {k:'role',l:'Role',t:'toggle',deletable:false},
-{k:'Takeoffs (any)',l:'T/O',t:'num',deletable:true},
+{k:'Takeoffs (any)',l:'T/O',t:'cb',deletable:true},
 {k:'Landings',l:'Ldg',t:'num',deletable:true},
 {k:'rightSeat',l:'RSeat',t:'cb',deletable:true},
-{k:'ltc',l:'LTC',t:'cb',deletable:true},
 {k:'ETOPS Flight',l:'ETOPS',t:'yn',deletable:true}
 ];
 
@@ -744,8 +744,12 @@ flightsBody.addEventListener('click',e=>{
 flightsBody.addEventListener('change',e=>{
     if(e.target.classList.contains('flight-checkbox')){
         const i=parseInt(e.target.dataset.i),k=e.target.dataset.k,isOpt=e.target.dataset.opt==='1';
-        if(isOpt)flights[i].opt[k]=e.target.checked?'Yes':'';
-        else if(k==='rightSeat'||k==='ltc')flights[i][k]=e.target.checked;
+        if(isOpt){
+            // For optional checkbox fields like ltc, store as boolean for special handling
+            if(k==='ltc')flights[i].opt[k]=e.target.checked;
+            else flights[i].opt[k]=e.target.checked?'Yes':'';
+        }
+        else if(k==='rightSeat'||k==='Takeoffs (any)')flights[i][k]=e.target.checked;
         else flights[i][k]=e.target.checked?'Yes':'';
         updateStats();
     }
@@ -830,7 +834,7 @@ function startManualEntry(){
     flights=[createEmptyFlight()];goToStep(2);renderTable();
 }
 function createEmptyFlight(){
-    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':'','Landings':'','ETOPS Flight':'',role:'PIC',assumedRP:false,rightSeat:false,ltc:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
+    const f={sortDate:'',Date:'',flightNumber:'',From:'',To:'','Tail Number':'',Model:'',modelUnmapped:false,'Nose Number':'','Employer Name':employer.value,totalMinutes:0,dayMinutes:0,nightMinutes:0,'Total Flight Time':'','Day Flight':'','Night':'','IFR Time':'','Takeoffs (any)':false,'Landings':'','ETOPS Flight':'',role:'PIC',assumedRP:false,rightSeat:false,origPicName:'',origSicName:'',origOtherPilot:'',origOtherCrew:'',picName:'',sicName:'',otherCrew:'',Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}};
     updatePilotNames(f);
     return f;
 }
@@ -897,7 +901,7 @@ function processAllFiles(){
             'Total Flight Time':minutesToDisplay(totalMins),
             'Day Flight':minutesToDisplay(dayMins),'Night':minutesToDisplay(nightMins),
             'IFR Time':minutesToDisplay(parseTimeToMinutes(rf.ifrTime)),
-            'Takeoffs (any)':rf.takeoffFlag==='Y'?1:'','Landings':rf.landingFlag==='Y'?1:'',
+            'Takeoffs (any)':rf.takeoffFlag==='Y','Landings':rf.landingFlag==='Y'?1:'',
             'ETOPS Flight':rf.etopsFlag==='Y'?'Yes':'',
             role:role,assumedRP:assumedRP,rightSeat:rf.rightSeatFlag==='Y',ltc:false,
             // Store originals for swapping
@@ -1038,7 +1042,7 @@ function renderTable(){
 function renderCell(f,c,i,isSelected){
     const v=c.isOpt?(f.opt[c.k]||''):f[c.k];
     const selClass=isSelected?' selected-cell':'';
-    if(c.t==='cb')return `<td class="center${selClass}"><input type="checkbox" class="flight-checkbox" data-i="${i}" data-k="${c.k}" ${v?'checked':''}></td>`;
+    if(c.t==='cb')return `<td class="center${selClass}"><input type="checkbox" class="flight-checkbox" data-i="${i}" data-k="${c.k}" ${c.isOpt?'data-opt="1"':''} ${v?'checked':''}></td>`;
     if(c.t==='yn')return `<td class="center${selClass}"><input type="checkbox" class="flight-checkbox" data-i="${i}" data-k="${c.k}" ${c.isOpt?'data-opt="1"':''} ${v==='Yes'?'checked':''}></td>`;
     if(c.t==='toggle')return `<td class="center${selClass}"><div class="role-toggle"><button data-i="${i}" data-r="PIC" data-k="role" class="${f.role==='PIC'?'active':''}">PIC</button><button data-i="${i}" data-r="SIC" data-k="role" class="${f.role==='SIC'?'active':''}">SIC</button><button data-i="${i}" data-r="RP" data-k="role" class="${f.role==='RP'?'active':''}">RP</button></div></td>`;
     
@@ -1170,7 +1174,9 @@ function renderSelFields(){
     if(!optFields.length){selectedFields.innerHTML='<span style="font-size:.5rem;color:var(--muted)">None</span>';return}
     selectedFields.innerHTML=optFields.map((k,idx)=>{
         const f=findF(k);
-        return `<span class="selected-tag" data-k="${k}"><button class="reorder-btn" data-dir="up" data-idx="${idx}">↑</button>${f?f.l:k}<button class="reorder-btn" data-dir="down" data-idx="${idx}">↓</button><button data-remove="${k}">✕</button></span>`;
+        const leftBtn=idx>0?`<button class="reorder-btn" data-dir="left" data-idx="${idx}">←</button>`:'';
+        const rightBtn=idx<optFields.length-1?`<button class="reorder-btn" data-dir="right" data-idx="${idx}">→</button>`:'';
+        return `<span class="selected-tag" data-k="${k}">${leftBtn}${f?f.l:k}${rightBtn}<button data-remove="${k}">✕</button></span>`;
     }).join('');
     selectedFields.querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=e=>{
         optFields.splice(optFields.indexOf(e.target.dataset.remove),1);savePrefs();renderFieldsGrid();if(flights.length)renderTable();
@@ -1178,8 +1184,8 @@ function renderSelFields(){
     selectedFields.querySelectorAll('.reorder-btn').forEach(btn=>btn.onclick=e=>{
         e.stopPropagation();
         const idx=parseInt(e.target.dataset.idx),dir=e.target.dataset.dir;
-        if(dir==='up'&&idx>0)[optFields[idx-1],optFields[idx]]=[optFields[idx],optFields[idx-1]];
-        else if(dir==='down'&&idx<optFields.length-1)[optFields[idx],optFields[idx+1]]=[optFields[idx+1],optFields[idx]];
+        if(dir==='left'&&idx>0)[optFields[idx-1],optFields[idx]]=[optFields[idx],optFields[idx-1]];
+        else if(dir==='right'&&idx<optFields.length-1)[optFields[idx],optFields[idx+1]]=[optFields[idx+1],optFields[idx]];
         savePrefs();renderSelFields();if(flights.length)renderTable();
     });
 }
@@ -1191,7 +1197,7 @@ function updateStats(){
         const t=parseFloat(f['Total Flight Time'])||0;tot+=t;
         if(f.role==='PIC')pic+=t;else if(f.role==='SIC')sic+=t;else if(f.role==='RP')rp+=t;
         day+=parseFloat(f['Day Flight'])||0;ngt+=parseFloat(f['Night'])||0;
-        to+=parseInt(f['Takeoffs (any)'])||0;ldg+=parseInt(f['Landings'])||0;
+        to+=f['Takeoffs (any)']?1:0;ldg+=parseInt(f['Landings'])||0;
     });
     statsRow.innerHTML=`<div class="stat-box"><div class="stat-label">Total</div><div class="stat-value">${tot.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">PIC</div><div class="stat-value">${pic.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">SIC</div><div class="stat-value">${sic.toFixed(1)}</div></div>${rp?`<div class="stat-box"><div class="stat-label">RP</div><div class="stat-value">${rp.toFixed(1)}</div></div>`:''}<div class="stat-box"><div class="stat-label">Day</div><div class="stat-value">${day.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">Night</div><div class="stat-value">${ngt.toFixed(1)}</div></div><div class="stat-box"><div class="stat-label">T/O</div><div class="stat-value">${to}</div></div><div class="stat-box"><div class="stat-label">Ldg</div><div class="stat-value">${ldg}</div></div>`;
 }
@@ -1228,8 +1234,7 @@ function generatePreview(){
         if(visibleCols.includes('Day Flight'))row['Day Flight']=f['Day Flight'];
         if(visibleCols.includes('Night'))row['Night']=f['Night'];
         if(visibleCols.includes('rightSeat'))row['Right Seat Time']=f.rightSeat?t:'';
-        if(visibleCols.includes('ltc'))row['Line Training Captain (LTC) Time']=f.ltc?t:'';
-        if(visibleCols.includes('Takeoffs (any)'))row['Takeoffs (any)']=f['Takeoffs (any)']||'';
+        if(visibleCols.includes('Takeoffs (any)'))row['Takeoffs (any)']=f['Takeoffs (any)']?1:'';
         if(visibleCols.includes('Landings'))row['Landings']=f['Landings']||'';
         if(visibleCols.includes('ETOPS Flight'))row['ETOPS Flight']=f['ETOPS Flight']||'';
         row['Employer Name']=f['Employer Name'];
@@ -1240,7 +1245,11 @@ function generatePreview(){
         
         // Optional fields
         optFields.forEach(k=>{
-            if(!hiddenCols.has(k))row[k]=f.opt[k]||'';
+            if(!hiddenCols.has(k)){
+                // Special handling for LTC - export as time when checked
+                if(k==='ltc')row['Line Training Captain (LTC) Time']=f.opt[k]?t:'';
+                else row[k]=f.opt[k]||'';
+            }
         });
         
         // Comments always last
