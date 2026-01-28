@@ -321,7 +321,7 @@
                     <button class="btn btn-small btn-secondary" id="allPicBtn">All PIC</button>
                     <button class="btn btn-small btn-secondary" id="allSicBtn">All SIC</button>
                     <button class="btn btn-small btn-secondary" id="allRpBtn">All RP</button>
-                    <button class="btn btn-small btn-secondary" id="resetRolesBtn" title="Reset roles to what was detected from file"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Reset</button>
+                    <button class="btn btn-small btn-secondary" id="resetRolesBtn" title="Reset all changes to original file values"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Reset</button>
                     <button class="btn btn-small btn-secondary" id="confirmRpBtn" style="display:none;color:var(--yellow)" title="Confirm all flights marked as assumed RP">Confirm RP?</button>
                     <div class="toolbar-sep"></div>
                     <div class="dropdown" id="colDropdown">
@@ -682,7 +682,17 @@ function scrollToCell(row,col){
 $('allPicBtn').addEventListener('click',()=>{saveUndo();flights.forEach(f=>{f.role='PIC';f.assumedRP=false;updatePilotNames(f)});renderTable()});
 $('allSicBtn').addEventListener('click',()=>{saveUndo();flights.forEach(f=>{f.role='SIC';f.assumedRP=false;updatePilotNames(f)});renderTable()});
 $('allRpBtn').addEventListener('click',()=>{saveUndo();flights.forEach(f=>{f.role='RP';f.assumedRP=false;updatePilotNames(f)});renderTable()});
-$('resetRolesBtn').addEventListener('click',()=>{saveUndo();flights.forEach(f=>{f.role=f.origRole;f.assumedRP=f.origAssumedRP;updatePilotNames(f)});renderTable();showStatus('Roles reset to file values.','success')});
+$('resetRolesBtn').addEventListener('click',()=>{
+    saveUndo();
+    flights.forEach((f,i)=>{
+        if(!f._original)return;
+        const orig=f._original;
+        // Restore all editable fields from original
+        Object.keys(orig).forEach(k=>{if(k!=='_original')f[k]=typeof orig[k]==='object'?JSON.parse(JSON.stringify(orig[k])):orig[k]});
+    });
+    detectDups();validateAllTimes();renderTable();
+    showStatus('All changes reset to original file values.','success');
+});
 $('confirmRpBtn').addEventListener('click',()=>{flights.forEach(f=>{if(f.assumedRP)f.assumedRP=false});renderTable();showStatus('All assumed RP flights confirmed.','success')});
 $('backBtn1').addEventListener('click',()=>goToStep(1));
 $('previewBtn').addEventListener('click',generatePreview);
@@ -1009,6 +1019,8 @@ function processAllFiles(){
             Comments:'',isDup:false,hasTimeError:false,hasRoundingNotice:false,opt:{}
         };
         updatePilotNames(f);
+        // Store original state for full reset
+        f._original=JSON.parse(JSON.stringify({...f,opt:{...f.opt}}));
         flights.push(f);
     });
     if(!flights.length){showStatus('No flights found.','error');return}
