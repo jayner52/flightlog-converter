@@ -25,9 +25,11 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;font-size:14px}
         .container{max-width:1400px;margin:0 auto;padding:1.5rem}
-        header{text-align:center;margin-bottom:1.5rem;position:relative;padding:1rem 0}
-        h1{font-size:1.75rem;font-weight:700;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em}
-        .subtitle{color:var(--text2);font-size:.95rem;margin-top:.25rem}
+        header{text-align:center;margin-bottom:1.5rem;position:relative;padding:1.25rem 0}
+        .logo{font-size:2.5rem;margin-bottom:.35rem;display:block;filter:drop-shadow(0 2px 8px rgba(59,130,246,.3));animation:fadeIn .5s ease}
+        h1{font-size:1.85rem;font-weight:700;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em;margin-bottom:.2rem}
+        .subtitle{color:var(--text2);font-size:.95rem}
+        .subtitle strong{color:var(--text);font-weight:600}
         .theme-toggle{position:absolute;top:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:4px;display:flex;gap:2px}
         .theme-toggle button{border:none;background:transparent;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.85rem;transition:all .2s;display:flex;align-items:center;justify-content:center}
         .theme-toggle button:hover{background:var(--hover)}
@@ -221,8 +223,9 @@
                 <button data-theme="light">☀️</button>
                 <button data-theme="dark" class="active">🌙</button>
             </div>
-            <h1>✈️ FlightLog Converter</h1>
-            <p class="subtitle">Convert airline logbooks to MyFlightBook format</p>
+            <span class="logo">✈️</span>
+            <h1>FlightLog Converter</h1>
+            <p class="subtitle">Convert <strong>Air Canada</strong> logbooks to <strong>MyFlightBook</strong> format</p>
         </header>
         <div class="steps">
             <div class="step active" id="step1"><span data-num="1"></span> Setup</div>
