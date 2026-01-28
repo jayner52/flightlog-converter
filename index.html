@@ -1600,6 +1600,16 @@ function selectCell(row,col){
         const td=tr.children[col+1];// +1 for sticky # col
         if(td)td.classList.add('selected-cell');
     }
+    // Auto-edit empty cells for quick data entry
+    const cols=getVisibleCols();
+    const colDef=cols[col];
+    if(colDef&&!currentEdit&&!['cb','yn','toggle'].includes(colDef.t)){
+        const f=flights[row];
+        const val=colDef.isOpt?f.opt[colDef.k]:f[colDef.k];
+        if(val===''||val===undefined||val===null){
+            activateCell(row,colDef);
+        }
+    }
 }
 
 function activateCell(row,col){
