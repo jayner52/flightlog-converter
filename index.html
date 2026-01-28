@@ -1698,7 +1698,8 @@ function startEdit(el,i,k,t,isOpt){
     else{inp.type='text';inp.value=cur}
     if(t!=='date')inp.value=cur;
     inp.className='edit-input';
-    inp.addEventListener('blur',()=>setTimeout(()=>{if(currentEdit)finishEdit(true)},50));
+    const editSession=currentEdit;
+    inp.addEventListener('blur',()=>setTimeout(()=>{if(currentEdit===editSession)finishEdit(true)},50));
     inp.addEventListener('keydown',e=>{
         if(e.key==='Enter'){e.preventDefault();finishEdit(true)}
         else if(e.key==='Escape'){e.preventDefault();finishEdit(false)}
