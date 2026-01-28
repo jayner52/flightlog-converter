@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlightLog Converter - Air Canada to MyFlightBook</title>
-    <meta name="description" content="Convert Air Canada PQRM logbook exports to MyFlightBook CSV format. Free, private, runs entirely in your browser.">
-    <meta property="og:title" content="FlightLog Converter">
-    <meta property="og:description" content="Convert Air Canada PQRM exports to MyFlightBook format. Free & private - all processing happens in your browser.">
+    <title>FlightLog Pro - Convert or Create Your Pilot Logbook</title>
+    <meta name="description" content="Convert airline logbooks to MyFlightBook format, or build your logbook from scratch. Free, private, runs entirely in your browser.">
+    <meta property="og:title" content="FlightLog Pro">
+    <meta property="og:description" content="Convert existing logbooks or create one from scratch. Free & private - all processing happens in your browser.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230a0f1a' width='100' height='100'/><path fill='%233b82f6' d='M70 45l-20-12V20a5 5 0 00-10 0v13L20 45v8l20-6v15l-6 4v6l11-3 11 3v-6l-6-4V47l20 6v-8z'/></svg>">
     <meta name="twitter:card" content="summary">
@@ -235,6 +235,11 @@
         .btn-coffee svg{width:20px;height:20px}
         .donate-dismiss{display:block;margin:1rem auto 0;background:none;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;padding:.5rem;transition:color .15s}
         .donate-dismiss:hover{color:var(--text2)}
+        .start-fresh-info{text-align:center;padding:1.5rem;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(34,197,94,.08));border:1px solid rgba(59,130,246,.2);border-radius:10px;margin-bottom:1rem}
+        .fresh-icon{width:48px;height:48px;margin:0 auto .75rem;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center}
+        .fresh-icon svg{width:24px;height:24px;stroke:#fff}
+        .start-fresh-info h3{font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:.4rem}
+        .start-fresh-info p{font-size:.8rem;color:var(--text2);line-height:1.5;max-width:400px;margin:0 auto}
         .optional-panel{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)}
         .optional-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:.35rem}
         .optional-header h4{font-size:.8rem;color:var(--text);font-weight:600}
@@ -277,9 +282,9 @@
                 <button data-theme="light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
                 <button data-theme="dark" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
             </div>
-            <div class="logo"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
-            <h1>FlightLog Converter</h1>
-            <p class="subtitle">Convert <strong>Air Canada</strong> logbooks to <strong>MyFlightBook</strong> format</p>
+            <div class="logo"><img src="logo.png" alt="FlightLog Pro" style="width:48px;height:48px;border-radius:8px"></div>
+            <h1>FlightLog Pro</h1>
+            <p class="subtitle">Convert existing logbooks <strong>or</strong> create yours from scratch</p>
         </header>
         <div class="steps">
             <div class="step active" id="step1"><span class="step-num"><span>1</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span> Setup</div>
@@ -290,7 +295,7 @@
         </div>
         <div class="section active" id="section1">
             <div class="card">
-                <div class="card-header"><h2 class="card-title">Configure Import & Export</h2></div>
+                <div class="card-header"><h2 class="card-title">Get Started</h2></div>
                 <div class="format-row">
                     <div class="format-group">
                         <label>Source Format</label>
@@ -302,8 +307,8 @@
                     </div>
                 </div>
                 <div class="mode-toggle" id="modeToggle">
-                    <button class="active" data-mode="upload"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload</button>
-                    <button data-mode="manual"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Manual</button>
+                    <button class="active" data-mode="upload"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Convert Existing</button>
+                    <button data-mode="manual"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Start Fresh</button>
                 </div>
                 <div id="uploadSection">
                     <div class="upload-zone" id="uploadZone">
@@ -324,6 +329,11 @@
                     </div>
                 </div>
                 <div id="manualSection" class="hidden">
+                    <div class="start-fresh-info">
+                        <div class="fresh-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg></div>
+                        <h3>Build Your Logbook From Scratch</h3>
+                        <p>Create a new MyFlightBook-compatible logbook with all the fields you need. Add flights manually, edit everything, then export.</p>
+                    </div>
                     <div class="pilot-detection visible">
                         <h4><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Your Name</h4>
                         <input type="text" id="pilotNameManual" placeholder="Enter your name">
@@ -523,7 +533,7 @@
             </div>
         </div>
         <footer>
-            <div style="margin-bottom:.35rem;display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="var(--primary)"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg> FlightLog Converter</div>
+            <div style="margin-bottom:.35rem;display:flex;align-items:center;justify-content:center;gap:.4rem"><img src="logo.png" alt="" style="width:18px;height:18px;border-radius:3px"> FlightLog Pro</div>
             <div style="display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> All data processed locally in your browser &bull; <a href="https://myflightbook.com/logbook/mvc/pub/ImportTable" target="_blank">MyFlightBook Docs</a> &bull; <a href="#" id="feedbackBtn" style="color:var(--muted);text-decoration:none" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted)'">Feedback</a></div>
         </footer>
     </div>
