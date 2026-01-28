@@ -253,6 +253,7 @@
                 </div>
                 <div class="toolbar">
                     <button class="btn btn-small btn-secondary" id="addBtn">+ Add</button>
+                    <button class="btn btn-small btn-secondary" id="clearAllBtn" style="color:var(--red)">Clear All</button>
                     <div class="toolbar-sep"></div>
                     <button class="btn btn-small btn-secondary" id="allPicBtn">All PIC</button>
                     <button class="btn btn-small btn-secondary" id="allSicBtn">All SIC</button>
@@ -276,6 +277,8 @@
                             <div><span>Fill column</span><kbd>Ctrl+Shift+F</kbd></div>
                         </div>
                     </div>
+                    <div class="toolbar-sep"></div>
+                    <a href="https://myflightbook.com/logbook/mvc/pub/ImportTable" target="_blank" class="btn btn-small btn-secondary" style="text-decoration:none;color:var(--cyan)">📖 MFB Fields</a>
                 </div>
                 <div class="table-wrapper">
                     <div class="table-scroll" id="tableScroll">
@@ -343,15 +346,117 @@ const MODEL_MAP={'l319':'A320','l-319':'A320','l 319':'A320','l320':'A320','l-32
 function normalizeModel(t){if(!t)return'';const n=t.toLowerCase().replace(/[\s\-]+/g,'');if(MODEL_MAP[n])return MODEL_MAP[n];for(const[k,v]of Object.entries(MODEL_MAP))if(n.includes(k)||k.includes(n))return v;return{model:t.trim().toUpperCase(),unmapped:true}}
 
 const CATS={
-'Time':[{k:'X-Country',l:'X-Country',t:'Number'},{k:'IMC',l:'IMC',t:'Number'},{k:'Simulated Instrument',l:'Sim Inst',t:'Number'},{k:'Dual Received',l:'Dual Rcvd',t:'Number'},{k:'CFI',l:'CFI',t:'Number'},{k:'Ground Simulator',l:'Ground Sim',t:'Number'},{k:'Pilot Flying Time',l:'PF Time',t:'Number'},{k:'Pilot Monitoring Time',l:'PM Time',t:'Number'},{k:'Multi-Pilot Time',l:'Multi-Pilot',t:'Number'},{k:'Solo Time',l:'Solo',t:'Number'},{k:'Relief Pilot Time',l:'Relief Time',t:'Number'}],
-'Landings':[{k:'FS Day Landings',l:'FS Day',t:'Number'},{k:'FS Night Landings',l:'FS Night',t:'Number'},{k:'Landings - Touch and Go',l:'Touch&Go',t:'Number'},{k:'Landings - Autoland',l:'Autoland',t:'Number'},{k:'Go-arounds',l:'Go-around',t:'Number'},{k:'Takeoffs - Night',l:'Night TO',t:'Number'}],
-'Approaches':[{k:'Approaches',l:'Approaches',t:'Number'},{k:'Hold',l:'Hold',t:'Yes/No'},{k:'Approaches - ILS',l:'ILS',t:'Number'},{k:'Approaches - GPS/LPV',l:'GPS/LPV',t:'Number'},{k:'Approaches - RNAV/GPS',l:'RNAV',t:'Number'},{k:'Approaches - VOR',l:'VOR',t:'Number'},{k:'Approaches - Visual',l:'Visual',t:'Number'},{k:'Missed Approaches',l:'Missed',t:'Number'}],
-'Personnel':[{k:'Instructor Name',l:'Instructor',t:'Text'},{k:'Safety-Pilot Name',l:'Safety Pilot',t:'Text'},{k:'Pilot Flying (Name)',l:'PF Name',t:'Text'},{k:'Pilot Monitoring (Name)',l:'PM Name',t:'Text'}],
-'Aircraft':[{k:'Route',l:'Route',t:'Text'},{k:'Additional Flight Remarks',l:'Remarks',t:'Text'},{k:'Distance Flown',l:'Distance',t:'Number'},{k:'Maximum Altitude',l:'Max Alt',t:'Number'}],
-'Training':[{k:'Flight Review',l:'Flt Review',t:'Yes/No'},{k:'Instrument Proficiency Check (IPC) Received',l:'IPC',t:'Yes/No'},{k:'Line Check Flight',l:'Line Check',t:'Yes/No'},{k:'Line Training Flight',l:'Line Trng',t:'Yes/No'},{k:'Line Training Captain (LTC) Time',l:'LTC Time',t:'Number'}],
-'Operations':[{k:'International Flight',l:'Int\'l',t:'Yes/No'},{k:'Deadhead',l:'Deadhead',t:'Yes/No'},{k:'Diversion',l:'Diversion',t:'Yes/No'},{k:'Ferry Flight',l:'Ferry',t:'Yes/No'},{k:'Rejected Takeoff',l:'RTO',t:'Yes/No'}],
-'Regs':[{k:'Part 91 Flight',l:'Pt 91',t:'Yes/No'},{k:'Part 121 Flight',l:'Pt 121',t:'Yes/No'},{k:'Part 705 Flight',l:'Pt 705',t:'Yes/No'}],
-'Duty':[{k:'Block Out Time',l:'Blk Out',t:'DateTime'},{k:'Block In Time',l:'Blk In',t:'DateTime'},{k:'Pay Time',l:'Pay',t:'Number'}]
+'Time':[
+    {k:'X-Country',l:'X-Country',t:'Number'},
+    {k:'IMC',l:'IMC',t:'Number'},
+    {k:'Simulated Instrument',l:'Sim Inst',t:'Number'},
+    {k:'Dual Received',l:'Dual Rcvd',t:'Number'},
+    {k:'CFI',l:'CFI',t:'Number'},
+    {k:'Ground Simulator',l:'Ground Sim',t:'Number'},
+    {k:'Pilot Flying Time',l:'PF Time',t:'Number'},
+    {k:'Pilot Monitoring Time',l:'PM Time',t:'Number'},
+    {k:'Multi-Pilot Time',l:'Multi-Pilot',t:'Number'},
+    {k:'Solo Time',l:'Solo',t:'Number'},
+    {k:'Relief Pilot Time',l:'Relief Time',t:'Number'},
+    {k:'Night Cross-country Time',l:'Night XC',t:'Number'},
+    {k:'Right Seat Time',l:'R Seat Time',t:'Number'},
+    {k:'Turbine Time',l:'Turbine',t:'Number'},
+    {k:'Jet Time',l:'Jet',t:'Number'},
+    {k:'Acting PIC Time',l:'Acting PIC',t:'Number'}
+],
+'Landings':[
+    {k:'FS Day Landings',l:'FS Day',t:'Number'},
+    {k:'FS Night Landings',l:'FS Night',t:'Number'},
+    {k:'Landings - Touch and Go',l:'Touch&Go',t:'Number'},
+    {k:'Landings - Autoland',l:'Autoland',t:'Number'},
+    {k:'Go-arounds',l:'Go-around',t:'Number'},
+    {k:'Takeoffs - Night',l:'Night TO',t:'Number'},
+    {k:'Landings - Night, towered Airport',l:'Night Twr',t:'Number'},
+    {k:'Landings - Night, Non-towered airport',l:'Night Non-Twr',t:'Number'},
+    {k:'Landings - Cross-wind',l:'Crosswind',t:'Number'}
+],
+'Approaches':[
+    {k:'Approaches',l:'Approaches',t:'Number'},
+    {k:'Hold',l:'Hold',t:'Yes/No'},
+    {k:'Approaches - ILS',l:'ILS',t:'Number'},
+    {k:'Approaches - GPS/LPV',l:'GPS/LPV',t:'Number'},
+    {k:'Approaches - RNAV/GPS',l:'RNAV',t:'Number'},
+    {k:'Approaches - VOR',l:'VOR',t:'Number'},
+    {k:'Approaches - Visual',l:'Visual',t:'Number'},
+    {k:'Approaches - Localizer',l:'LOC',t:'Number'},
+    {k:'Approaches - Category I',l:'CAT I',t:'Number'},
+    {k:'Approaches - Category II',l:'CAT II',t:'Number'},
+    {k:'Approaches - Category III',l:'CAT III',t:'Number'},
+    {k:'Missed Approaches',l:'Missed',t:'Number'}
+],
+'Personnel':[
+    {k:'Instructor Name',l:'Instructor',t:'Text'},
+    {k:'Safety-Pilot Name',l:'Safety Pilot',t:'Text'},
+    {k:'Pilot Flying (Name)',l:'PF Name',t:'Text'},
+    {k:'Pilot Monitoring (Name)',l:'PM Name',t:'Text'},
+    {k:'Captain Name',l:'Captain',t:'Text'},
+    {k:'First Officer Name',l:'First Officer',t:'Text'},
+    {k:'Relief Crew Name(s)',l:'Relief Crew',t:'Text'},
+    {k:'Flight Attendant Name(s)',l:'F/As',t:'Text'},
+    {k:'Student Name',l:'Student',t:'Text'},
+    {k:'Examiner Name',l:'Examiner',t:'Text'}
+],
+'Aircraft':[
+    {k:'Route',l:'Route',t:'Text'},
+    {k:'Additional Flight Remarks',l:'Remarks',t:'Text'},
+    {k:'Distance Flown',l:'Distance',t:'Number'},
+    {k:'Maximum Altitude',l:'Max Alt',t:'Number'},
+    {k:'Aircraft Registration',l:'Registration',t:'Text'},
+    {k:'Fuel Added',l:'Fuel Added',t:'Number'},
+    {k:'Fuel Consumed',l:'Fuel Used',t:'Number'}
+],
+'Training':[
+    {k:'Flight Review',l:'Flt Review',t:'Yes/No'},
+    {k:'Instrument Proficiency Check (IPC) Received',l:'IPC',t:'Yes/No'},
+    {k:'Line Check Flight',l:'Line Check',t:'Yes/No'},
+    {k:'Line Training Flight',l:'Line Trng',t:'Yes/No'},
+    {k:'Line Training Captain (LTC) Time',l:'LTC Time',t:'Number'},
+    {k:'Line Check Airman (LCA) Time',l:'LCA Time',t:'Number'},
+    {k:'Base Check/Check-Out',l:'Base Check',t:'Yes/No'},
+    {k:'Checkride - ATP',l:'ATP Checkride',t:'Yes/No'},
+    {k:'Checkride - Commercial',l:'Comm Checkride',t:'Yes/No'},
+    {k:'Checkride - Instrument',l:'Inst Checkride',t:'Yes/No'},
+    {k:'PIC Proficiency Check (FAR 61.58)',l:'61.58 Check',t:'Yes/No'},
+    {k:'Initial Operating Experience Flight',l:'IOE',t:'Yes/No'}
+],
+'Operations':[
+    {k:'International Flight',l:'Int\'l',t:'Yes/No'},
+    {k:'Deadhead',l:'Deadhead',t:'Yes/No'},
+    {k:'Diversion',l:'Diversion',t:'Yes/No'},
+    {k:'Ferry Flight',l:'Ferry',t:'Yes/No'},
+    {k:'Rejected Takeoff',l:'RTO',t:'Yes/No'},
+    {k:'V1 Cut',l:'V1 Cut',t:'Yes/No'},
+    {k:'Trans-Atlantic Flight',l:'Trans-Atl',t:'Yes/No'},
+    {k:'Trans-Pacific Flight',l:'Trans-Pac',t:'Yes/No'},
+    {k:'Oceanic Flight',l:'Oceanic',t:'Yes/No'},
+    {k:'Revenue Flight',l:'Revenue',t:'Yes/No'},
+    {k:'Repositioning Flight',l:'Repo',t:'Yes/No'}
+],
+'Regs':[
+    {k:'Part 91 Flight',l:'Pt 91',t:'Yes/No'},
+    {k:'Part 121 Flight',l:'Pt 121',t:'Yes/No'},
+    {k:'Part 135 Flight',l:'Pt 135',t:'Yes/No'},
+    {k:'Part 705 Flight',l:'Pt 705',t:'Yes/No'},
+    {k:'Part 704 Flight',l:'Pt 704',t:'Yes/No'},
+    {k:'Part 121 Check Flight',l:'121 Check',t:'Yes/No'},
+    {k:'Part 135.293 Competency Check',l:'135.293',t:'Yes/No'},
+    {k:'Part 135.297 Instrument Proficiency Check',l:'135.297 IPC',t:'Yes/No'}
+],
+'Duty':[
+    {k:'Block Out Time',l:'Blk Out',t:'DateTime'},
+    {k:'Block In Time',l:'Blk In',t:'DateTime'},
+    {k:'Pay Time',l:'Pay',t:'Number'},
+    {k:'Flight Duty Period Start (UTC)',l:'FDP Start',t:'DateTime'},
+    {k:'Flight Duty Period End (UTC)',l:'FDP End',t:'DateTime'},
+    {k:'Duty Time Start (UTC)',l:'Duty Start',t:'DateTime'},
+    {k:'Duty Time End (UTC)',l:'Duty End',t:'DateTime'},
+    {k:'RON (Remain Over Night)',l:'RON',t:'Number'}
+]
 };
 
 // Base columns - PIC, SIC names derived; Comments always last
@@ -430,6 +535,7 @@ fileInput.addEventListener('change',e=>handleFiles(e.target.files));
 processBtn.addEventListener('click',processAllFiles);
 manualStartBtn.addEventListener('click',startManualEntry);
 $('addBtn').addEventListener('click',addNewRow);
+$('clearAllBtn').addEventListener('click',clearAllFlights);
 function addNewRow(){
     flights.push(createEmptyFlight());
     const newRowIdx=flights.length-1;
@@ -958,7 +1064,27 @@ function finishEdit(save,andThen){
     if(andThen)andThen();
 }
 
-function delFlight(i){if(flights.length===1){showStatus('Cannot delete last.','error');return}saveUndo();flights.splice(i,1);detectDups();validateAllTimes();if(selectedCell.row>=flights.length)selectedCell.row=flights.length-1;renderTable()}
+function delFlight(i){
+    saveUndo();
+    flights.splice(i,1);
+    if(flights.length){
+        detectDups();validateAllTimes();
+        if(selectedCell.row>=flights.length)selectedCell.row=flights.length-1;
+    }else{
+        selectedCell={row:-1,col:-1};
+    }
+    renderTable();
+}
+
+function clearAllFlights(){
+    if(!flights.length)return;
+    if(!confirm('Delete all '+flights.length+' flights?'))return;
+    saveUndo();
+    flights=[];
+    selectedCell={row:-1,col:-1};
+    renderTable();
+    showStatus('All flights cleared','success');
+}
 
 function initCatTabs(){
     categoryTabs.innerHTML=Object.keys(CATS).map(c=>`<div class="category-tab ${c===activeCat?'active':''}" data-cat="${c}">${c}</div>`).join('');
@@ -1006,10 +1132,11 @@ function updateStats(){
 }
 
 function generatePreview(){
+    if(!flights.length){showStatus('No flights to preview','error');return}
     const hasRP=flights.some(f=>f.role==='RP');
     const hasOtherCrew=flights.some(f=>f.otherCrew);
     const visibleCols=getVisibleCols().map(c=>c.k);
-    
+
     csvData=flights.map(f=>{
         const t=f['Total Flight Time']||'';
         const isPIC=f.role==='PIC',isSIC=f.role==='SIC',isRP=f.role==='RP';
