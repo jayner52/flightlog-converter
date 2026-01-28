@@ -190,19 +190,12 @@
         .shortcuts-popup{display:none;position:absolute;bottom:100%;left:0;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.75rem;width:240px;z-index:100;margin-bottom:6px;box-shadow:var(--shadow)}
         .shortcuts-popup div{font-size:.8rem;padding:.25rem 0;display:flex;justify-content:space-between}
         .shortcuts-popup kbd{background:var(--bg2);padding:.15rem .35rem;border-radius:4px;font-family:'SF Mono',Monaco,monospace;font-size:.75rem;border:1px solid var(--border)}
-        .model-settings{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.5rem;padding:.5rem .6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px}
-        .model-toggle{display:flex;align-items:center;gap:.4rem}
+        .model-settings{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;padding:.4rem .6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px}
         .model-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase}
         .toggle-pills{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px}
         .toggle-pills .pill{padding:.2rem .5rem;font-size:.65rem;font-weight:500;border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:3px;transition:all .15s}
         .toggle-pills .pill.active{background:var(--primary);color:#fff}
         .toggle-pills .pill:hover:not(.active){background:var(--hover);color:var(--text)}
-        .family-toggles{display:flex;gap:.25rem;flex-wrap:wrap}
-        .family-pill{display:flex;align-items:center;gap:.25rem;padding:.2rem .4rem;font-size:.6rem;font-weight:600;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:4px;cursor:pointer;transition:all .15s}
-        .family-pill:hover{border-color:var(--primary)}
-        .family-pill .family-mode{font-size:.5rem;font-weight:500;padding:.1rem .2rem;border-radius:2px;background:var(--bg2);color:var(--muted)}
-        .family-pill[data-mode="specific"] .family-mode{background:rgba(59,130,246,.15);color:var(--primary)}
-        .family-pill[data-mode="generic"] .family-mode{background:rgba(148,163,184,.15);color:var(--muted)}
         .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:1000;padding:1rem}
         .modal{background:var(--card);border:1px solid var(--border);border-radius:10px;width:100%;max-width:700px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.4)}
         .modal-header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border)}
@@ -345,19 +338,10 @@
                     <span class="rp-count" id="rpCount" style="display:none">0</span>
                 </div>
                 <div class="model-settings" id="modelSettings">
-                    <div class="model-toggle">
-                        <span class="model-label">Model Output:</span>
-                        <div class="toggle-pills" id="modelModePills">
-                            <button class="pill" data-mode="generic">Generic</button>
-                            <button class="pill active" data-mode="specific">Specific</button>
-                        </div>
-                    </div>
-                    <div class="family-toggles" id="familyToggles">
-                        <button class="family-pill" data-family="A32X" data-mode="specific" title="A319/A320/A321">A32X <span class="family-mode">Specific</span></button>
-                        <button class="family-pill" data-family="B787" data-mode="specific" title="787-8/787-9">B787 <span class="family-mode">Specific</span></button>
-                        <button class="family-pill" data-family="B777" data-mode="specific" title="777-200LR/777-300ER">B777 <span class="family-mode">Specific</span></button>
-                        <button class="family-pill" data-family="B767" data-mode="generic" title="767-300ER/767-300F">B767 <span class="family-mode">Generic</span></button>
-                        <button class="family-pill" data-family="A330" data-mode="generic" title="A330-343">A330 <span class="family-mode">Generic</span></button>
+                    <span class="model-label">Model Output:</span>
+                    <div class="toggle-pills" id="modelModePills">
+                        <button class="pill" data-mode="generic">Generic</button>
+                        <button class="pill active" data-mode="specific">Specific</button>
                     </div>
                     <button class="btn btn-small btn-secondary" id="catalogBtn" title="View aircraft catalog"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Catalog</button>
                 </div>
@@ -697,25 +681,8 @@ function buildCatalogIndexes(){
 buildCatalogIndexes();
 
 // Family groupings for UI toggles
-const FAMILY_GROUPS={
-    'A32X':['A319','A320','A321','A321XLR'],
-    'B787':['787-8','787-9'],
-    'B777':['777-200LR','777-300ER'],
-    'B767':['767-300ER','767-300F'],
-    'A330':['A330']
-};
-
 // Model output preferences (user-configurable)
 let modelOutputMode='specific'; // 'generic' or 'specific'
-let familyOutputSettings={A32X:'specific',B787:'specific',B777:'specific',B767:'generic',A330:'generic'};
-
-// Get family group for a variant
-function getFamilyGroup(variant){
-    for(const[group,variants]of Object.entries(FAMILY_GROUPS)){
-        if(variants.includes(variant))return group;
-    }
-    return null;
-}
 
 // Normalize registration for lookup (remove dashes, uppercase)
 function normalizeReg(r){return(r||'').replace(/-/g,'').toUpperCase();}
@@ -773,12 +740,7 @@ function resolveAircraftVariant(identifiers){
 function getModelForOutput(flight){
     const family=flight._variantInfo?.family||flight.family||flight.Model;
     const variant=flight._variantInfo?.variant||flight.variant||flight.Model;
-    const group=getFamilyGroup(variant);
-
-    // Check family-specific setting, then global setting
-    const mode=group?familyOutputSettings[group]:modelOutputMode;
-
-    if(mode==='generic')return family;
+    if(modelOutputMode==='generic')return family;
     return variant;
 }
 
@@ -976,20 +938,10 @@ function loadPrefs(){
             modelOutputMode=p.modelOutputMode;
             $('modelModePills').querySelectorAll('.pill').forEach(pl=>pl.classList.toggle('active',pl.dataset.mode===modelOutputMode));
         }
-        if(p.familyOutputSettings){
-            Object.assign(familyOutputSettings,p.familyOutputSettings);
-            document.querySelectorAll('.family-pill').forEach(fp=>{
-                const fam=fp.dataset.family;
-                if(familyOutputSettings[fam]){
-                    fp.dataset.mode=familyOutputSettings[fam];
-                    fp.querySelector('.family-mode').textContent=familyOutputSettings[fam]==='specific'?'Specific':'Generic';
-                }
-            });
-        }
     }catch(e){}
 }
 function savePrefs(){
-    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({employer:employer.value,showSelf,hiddenCols:[...hiddenCols],optFields,customLabels,modelOutputMode,familyOutputSettings}))}catch(e){}
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({employer:employer.value,showSelf,hiddenCols:[...hiddenCols],optFields,customLabels,modelOutputMode}))}catch(e){}
 }
 
 modeToggle.addEventListener('click',e=>{
@@ -1081,32 +1033,8 @@ $('confirmRpBtn').addEventListener('click',()=>{flights.forEach(f=>{if(f.assumed
 $('modelModePills').addEventListener('click',e=>{
     const pill=e.target.closest('.pill');
     if(!pill)return;
-    const mode=pill.dataset.mode;
-    modelOutputMode=mode;
-    // Update all family settings to match global mode
-    Object.keys(familyOutputSettings).forEach(k=>familyOutputSettings[k]=mode);
-    // Update UI
-    $('modelModePills').querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===mode));
-    document.querySelectorAll('.family-pill').forEach(fp=>{
-        fp.dataset.mode=mode;
-        fp.querySelector('.family-mode').textContent=mode==='specific'?'Specific':'Generic';
-    });
-    // Update flight models and re-render
-    flights.forEach(f=>{f.Model=getModelForOutput(f)});
-    if(flights.length)renderTable();
-    savePrefs();
-});
-
-$('familyToggles').addEventListener('click',e=>{
-    const pill=e.target.closest('.family-pill');
-    if(!pill)return;
-    const family=pill.dataset.family;
-    const currentMode=pill.dataset.mode;
-    const newMode=currentMode==='specific'?'generic':'specific';
-    pill.dataset.mode=newMode;
-    pill.querySelector('.family-mode').textContent=newMode==='specific'?'Specific':'Generic';
-    familyOutputSettings[family]=newMode;
-    // Update flight models for this family and re-render
+    modelOutputMode=pill.dataset.mode;
+    $('modelModePills').querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===modelOutputMode));
     flights.forEach(f=>{f.Model=getModelForOutput(f)});
     if(flights.length)renderTable();
     savePrefs();
