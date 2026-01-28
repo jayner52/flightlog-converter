@@ -222,6 +222,19 @@
         .feedback-status{margin-top:.75rem;padding:.5rem .75rem;border-radius:6px;font-size:.8rem;text-align:center}
         .feedback-status.success{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
         .feedback-status.error{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+        .donate-modal{max-width:380px;text-align:center;overflow:visible}
+        .donate-content{padding:2rem 1.5rem}
+        .donate-icon{width:64px;height:64px;margin:0 auto 1rem;background:linear-gradient(135deg,#ffdd00 0%,#fbb034 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(251,176,52,.4)}
+        .donate-icon svg{width:32px;height:32px;stroke:#7c4a03}
+        .donate-modal h2{font-size:1.25rem;font-weight:700;margin-bottom:.5rem;color:var(--text)}
+        .donate-stats{font-size:.9rem;color:var(--text2);margin-bottom:.75rem}
+        .donate-stats strong{color:var(--primary);font-weight:600}
+        .donate-message{font-size:.85rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.5}
+        .btn-coffee{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;background:linear-gradient(135deg,#ffdd00 0%,#fbb034 100%);color:#7c4a03;font-weight:600;font-size:.95rem;border-radius:8px;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(251,176,52,.3)}
+        .btn-coffee:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(251,176,52,.4)}
+        .btn-coffee svg{width:20px;height:20px}
+        .donate-dismiss{display:block;margin:1rem auto 0;background:none;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;padding:.5rem;transition:color .15s}
+        .donate-dismiss:hover{color:var(--text2)}
         .optional-panel{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)}
         .optional-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:.35rem}
         .optional-header h4{font-size:.8rem;color:var(--text);font-weight:600}
@@ -489,6 +502,24 @@
                     </div>
                     <div id="feedbackStatus" class="feedback-status" style="display:none"></div>
                 </form>
+            </div>
+        </div>
+        <!-- Thank You / Donation Modal -->
+        <div class="modal-overlay" id="donateModal" style="display:none">
+            <div class="modal donate-modal">
+                <div class="donate-content">
+                    <div class="donate-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                    </div>
+                    <h2>Your logbook is ready!</h2>
+                    <p class="donate-stats" id="donateStats">You just converted <strong>0 flights</strong> in seconds.</p>
+                    <p class="donate-message">This tool is free and always will be. If it saved you time, consider buying me a coffee to keep it running.</p>
+                    <a href="https://buymeacoffee.com/jiroberts" target="_blank" class="btn-coffee" id="coffeeBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+                        Buy me a coffee
+                    </a>
+                    <button class="donate-dismiss" id="donateDismiss">Maybe next time</button>
+                </div>
             </div>
         </div>
         <footer>
@@ -1184,6 +1215,24 @@ $('closeFeedbackBtn').addEventListener('click',closeFeedbackModal);
 $('feedbackModal').addEventListener('click',e=>{if(e.target===$('feedbackModal'))closeFeedbackModal()});
 $('feedbackType').addEventListener('change',handleFeedbackTypeChange);
 $('feedbackForm').addEventListener('submit',submitFeedback);
+
+// Donation modal functions
+function showDonateModal(){
+    const count=flights.length;
+    $('donateStats').innerHTML=`You just converted <strong>${count} flight${count!==1?'s':''}</strong> in seconds.`;
+    $('donateModal').style.display='flex';
+}
+
+function closeDonateModal(){
+    $('donateModal').style.display='none';
+}
+
+$('donateDismiss').addEventListener('click',closeDonateModal);
+$('donateModal').addEventListener('click',e=>{if(e.target===$('donateModal'))closeDonateModal()});
+$('coffeeBtn').addEventListener('click',()=>{
+    $('donateStats').innerHTML='<strong>Thank you so much!</strong> You\'re awesome.';
+    setTimeout(closeDonateModal,1500);
+});
 
 $('backBtn1').addEventListener('click',()=>goToStep(1));
 $('previewBtn').addEventListener('click',generatePreview);
@@ -1919,6 +1968,7 @@ function downloadCSV(){
     btn.innerHTML='<svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Downloaded!';
     showStatus('CSV file downloaded successfully!','success');
     setTimeout(()=>{btn.classList.remove('downloaded');btn.innerHTML='<svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download'},2000);
+    setTimeout(showDonateModal,500);
 }
 
 function convDate(d){const m={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};const x=d.replace(/\s+/g,' ').trim().match(/([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4})/);return x?m[x[1].toLowerCase()]+'/'+parseInt(x[2])+'/'+x[3]:d}
