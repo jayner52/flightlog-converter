@@ -23,7 +23,8 @@
         @keyframes spin{to{transform:rotate(360deg)}}
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;font-size:13px;-webkit-font-smoothing:antialiased}
-        .container{max-width:1200px;margin:0 auto;padding:1.25rem}
+        .container{max-width:95vw;margin:0 auto;padding:1rem 1.5rem}
+        @media(min-width:1800px){.container{max-width:1700px}}
         .icon{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
         .icon-sm{width:14px;height:14px}
         .icon-lg{width:20px;height:20px}
@@ -219,7 +220,8 @@
         footer a{color:var(--primary);text-decoration:none;font-weight:500;transition:color .15s}
         footer a:hover{color:var(--cyan)}
         .hidden{display:none!important}
-        @media(max-width:640px){.container{padding:1rem}.format-row{flex-direction:column}.format-group{min-width:100%}.settings-row{flex-direction:column}.table-scroll{max-height:320px}th,td{padding:.4rem .25rem}.btn{padding:.5rem .75rem}}
+        @media(max-width:768px){.container{padding:.75rem}.toolbar{flex-wrap:wrap;gap:.25rem}.toolbar-sep{display:none}.shortcuts-help{display:none}}
+        @media(max-width:640px){.container{padding:.5rem}.format-row{flex-direction:column}.format-group{min-width:100%}.settings-row{flex-direction:column}.table-scroll{max-height:300px}th,td{padding:.25rem .2rem;font-size:.65rem}.btn{padding:.4rem .6rem;font-size:.7rem}.btn-small{padding:.2rem .4rem;font-size:.65rem}.card{padding:.75rem}}
     </style>
 </head>
 <body>
