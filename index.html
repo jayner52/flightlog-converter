@@ -308,6 +308,9 @@
         .apply-all-employer input:focus{border-color:var(--primary);outline:none}
         .jazz-badge{font-size:.55rem;padding:.1rem .25rem;background:rgba(139,92,246,.15);border:1px solid var(--purple);color:var(--purple);border-radius:3px;margin-left:.25rem}
         .auto-badge{font-size:.55rem;padding:.1rem .25rem;background:rgba(34,197,94,.15);border:1px solid var(--green);color:var(--green);border-radius:3px;margin-left:.25rem;cursor:help}
+        .file-item-needs-input{background:rgba(234,179,8,.15)!important;border-color:var(--yellow)!important}
+        .file-employer-input.needs-input{border-color:var(--yellow);background:rgba(234,179,8,.1)}
+        .file-employer-input.needs-input::placeholder{color:var(--yellow)}
         /* Summary modal styles */
         .summary-modal{max-width:800px;max-height:90vh}
         .summary-content{padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.25rem;overflow-y:auto;max-height:calc(90vh - 80px)}
@@ -1913,35 +1916,56 @@ async function handleFiles(f){
         if(detected){
             fileUploads[idx].employer=detected;
             fileUploads[idx].autoDetected=true;
+            fileUploads[idx].needsInput=false;
+        }else{
+            // Couldn't detect - mark as needing input
+            fileUploads[idx].needsInput=true;
+            fileUploads[idx].autoDetected=false;
         }
     });
+    // Check if different employers were detected - auto-enable per-upload mode
+    const detectedEmployers=new Set(fileUploads.filter(fu=>fu.autoDetected).map(fu=>fu.employer));
+    if(detectedEmployers.size>1||fileUploads.some(fu=>fu.needsInput)){
+        perUploadMode=true;
+        $('perUploadCheck').checked=true;
+    }
     renderFileList();// Re-render with detected employers
     let maxCount=0;detectedPilot='';
     for(let name in pilotCounts)if(pilotCounts[name]>maxCount){maxCount=pilotCounts[name];detectedPilot=name}
     if(detectedPilot){pilotDetection.classList.add('visible');pilotNameInput.value=detectedPilot;detectedInfo.textContent=`${maxCount}/${rawFlights.length} flights`}
     processBtn.disabled=!files.length;
     if(files.length)uploadZone.classList.add('has-file');
-    // Show message if employers were auto-detected
+    // Show appropriate message
     const autoCount=newFileIndices.filter(i=>fileUploads[i].autoDetected).length;
-    if(autoCount>0)showStatus(`Auto-detected employer for ${autoCount} file(s) from aircraft data. You can change this below.`,'success');
+    const needsCount=newFileIndices.filter(i=>fileUploads[i].needsInput).length;
+    if(needsCount>0&&autoCount>0)showStatus(`Auto-detected ${autoCount} file(s). ${needsCount} file(s) need employer - please fill in below.`,'warning');
+    else if(needsCount>0)showStatus(`Could not detect employer for ${needsCount} file(s). Please fill in below.`,'warning');
+    else if(autoCount>0)showStatus(`Auto-detected employer for ${autoCount} file(s) from aircraft data.`,'success');
 }
 function renderFileList(){
     // Only show per-upload toggle if multiple files
     $('perUploadToggle').style.display=files.length>1?'flex':'none';
-    if(files.length<=1){$('perUploadCheck').checked=false;perUploadMode=false}
+    if(files.length<=1&&!fileUploads.some(fu=>fu.autoDetected||fu.needsInput)){
+        $('perUploadCheck').checked=false;
+        perUploadMode=false;
+    }
     // Show apply-all section when per-upload mode is enabled
     $('applyAllEmployer').style.display=(perUploadMode&&files.length>1)?'flex':'none';
 
-    // Check if any files have auto-detected employers
-    const hasAutoDetected=fileUploads.some(fu=>fu.autoDetected);
+    // Check if we should show employer inputs (multiple files, auto-detected, or needs input)
+    const showEmployerInputs=files.length>1||fileUploads.some(fu=>fu.autoDetected||fu.needsInput);
 
     fileList.innerHTML=files.map((f,i)=>{
         const fu=fileUploads[i];
-        let html=`<div class="file-item"><div class="file-item-employer"><span><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${f.name}</span>`;
-        // Always show employer input when auto-detected or in per-upload mode
-        if((fu&&fu.autoDetected)||perUploadMode){
+        const needsInput=fu&&fu.needsInput&&!fu.employer;
+        const itemClass=needsInput?'file-item file-item-needs-input':'file-item';
+        let html=`<div class="${itemClass}"><div class="file-item-employer"><span><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${f.name}</span>`;
+        // Show employer input when multiple files or detection happened
+        if(showEmployerInputs&&fu){
             const autoBadge=fu.autoDetected?'<span class="auto-badge" title="Detected from aircraft data - click to change">Auto</span>':'';
-            html+=`<input type="text" list="employerList" data-file-idx="${i}" class="file-employer-input" value="${fu.employer||''}" placeholder="Employer...">${autoBadge}`;
+            const inputClass=needsInput?'file-employer-input needs-input':'file-employer-input';
+            const placeholder=needsInput?'Enter employer...':'Employer...';
+            html+=`<input type="text" list="employerList" data-file-idx="${i}" class="${inputClass}" value="${fu.employer||''}" placeholder="${placeholder}">${autoBadge}`;
         }
         html+=`</div><button data-idx="${i}"><svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`;
         return html;
@@ -1961,16 +1985,24 @@ function renderFileList(){
             const idx=parseInt(inp.dataset.fileIdx);
             if(fileUploads[idx]){
                 fileUploads[idx].employer=inp.value;
-                // Clear auto-detected flag when user manually changes
-                if(fileUploads[idx].autoDetected){
-                    fileUploads[idx].autoDetected=false;
-                    renderFileList();// Re-render to remove Auto badge
-                }
+                // Clear flags when user manually changes
+                const needsRerender=fileUploads[idx].autoDetected||(fileUploads[idx].needsInput&&inp.value);
+                fileUploads[idx].autoDetected=false;
+                if(inp.value)fileUploads[idx].needsInput=false;
+                if(needsRerender)renderFileList();// Re-render to update badges/highlighting
             }
         };
         inp.oninput=e=>{
             const idx=parseInt(inp.dataset.fileIdx);
-            if(fileUploads[idx])fileUploads[idx].employer=inp.value;
+            if(fileUploads[idx]){
+                fileUploads[idx].employer=inp.value;
+                // Clear needsInput highlighting as user types
+                if(inp.value&&fileUploads[idx].needsInput){
+                    fileUploads[idx].needsInput=false;
+                    inp.classList.remove('needs-input');
+                    inp.closest('.file-item').classList.remove('file-item-needs-input');
+                }
+            }
         };
     });
 }
