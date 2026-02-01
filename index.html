@@ -497,11 +497,20 @@
                     <input type="text" id="catalogSearch" placeholder="Search registration, fin, variant...">
                     <select id="catalogFamilyFilter">
                         <option value="">All Families</option>
-                        <option value="A320">A319/A320/A321</option>
-                        <option value="A330">A330</option>
-                        <option value="B767">B767</option>
-                        <option value="B777">B777</option>
-                        <option value="B787">B787</option>
+                        <optgroup label="Air Canada Mainline">
+                            <option value="A220">A220</option>
+                            <option value="A320">A319/A320/A321</option>
+                            <option value="A330">A330</option>
+                            <option value="B737">737 MAX</option>
+                            <option value="B767">B767</option>
+                            <option value="B777">B777</option>
+                            <option value="B787">B787</option>
+                        </optgroup>
+                        <optgroup label="Jazz (AC Express)">
+                            <option value="CRJ">CRJ-900</option>
+                            <option value="DHC-8">Q400</option>
+                            <option value="E-Jet">E175</option>
+                        </optgroup>
                     </select>
                 </div>
                 <div class="modal-body">
@@ -646,7 +655,7 @@ function doUndo(){
     showStatus('Undone','success');
 }
 
-const MODEL_MAP={'l319':'A320','l-319':'A320','l 319':'A320','l320':'A320','l-320':'A320','l 320':'A320','l321':'A320','l-321':'A320','l 321':'A320','a319':'A320','a320':'A320','a321':'A320','319':'A320','320':'A320','321':'A320','l330':'A330','l-330':'A330','l 330':'A330','a330':'A330','330':'A330','l350':'A350','l-350':'A350','l 350':'A350','a350':'A350','350':'A350','b737':'B737','b-737':'B737','737':'B737','737max':'B737','7m8':'B737','7m9':'B737','b767':'B767','767':'B767','b777':'B777','777':'B777','77l':'B777','77w':'B777','b787':'B787','787':'B787','788':'B787','789':'B787','e175':'E175','e190':'E190','crj':'CRJ','q400':'Q400'};
+const MODEL_MAP={'a220':'A220','220':'A220','a220300':'A220','bcs3':'A220','cs300':'A220','l319':'A320','l-319':'A320','l 319':'A320','l320':'A320','l-320':'A320','l 320':'A320','l321':'A320','l-321':'A320','l 321':'A320','a319':'A320','a320':'A320','a321':'A320','a321xlr':'A320','319':'A320','320':'A320','321':'A320','l330':'A330','l-330':'A330','l 330':'A330','a330':'A330','330':'A330','l350':'A350','l-350':'A350','l 350':'A350','a350':'A350','350':'A350','b737':'B737','b-737':'B737','737':'B737','737max':'B737','737max8':'B737','7378':'B737','7m8':'B737','7m9':'B737','b767':'B767','767':'B767','b777':'B777','777':'B777','77l':'B777','77w':'B777','b787':'B787','787':'B787','788':'B787','789':'B787','e175':'E175','erj175':'E175','e190':'E190','crj':'CRJ','crj900':'CRJ','crj200':'CRJ','q400':'Q400','dh8d':'Q400','dhc8':'Q400','dash8':'Q400'};
 function normalizeModel(t){if(!t)return'';const n=t.toLowerCase().replace(/[\s\-]+/g,'');if(MODEL_MAP[n])return MODEL_MAP[n];for(const[k,v]of Object.entries(MODEL_MAP))if(n.includes(k)||k.includes(n))return v;return{model:t.trim().toUpperCase(),unmapped:true}}
 
 // ==================== AIRCRAFT CATALOG ====================
@@ -654,7 +663,49 @@ function normalizeModel(t){if(!t)return'';const n=t.toLowerCase().replace(/[\s\-
 // Provides specific variant lookup by registration, fin, or nose number
 
 const AIRCRAFT_CATALOG_AC = [
-// A319 Fleet
+// A220-300 Fleet
+{fin:'101',reg:'C-GROV',msn:'55101',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'102',reg:'C-GJXE',msn:'55102',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'103',reg:'C-GJXN',msn:'55103',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'104',reg:'C-GJXV',msn:'55104',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'105',reg:'C-GJXW',msn:'55105',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'106',reg:'C-GJXY',msn:'55106',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'107',reg:'C-GJYA',msn:'55107',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'108',reg:'C-GJYC',msn:'55108',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'109',reg:'C-GJYE',msn:'55109',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'110',reg:'C-GJYI',msn:'55110',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'111',reg:'C-GMYU',msn:'55111',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'112',reg:'C-GMZN',msn:'55112',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'113',reg:'C-GMZR',msn:'55113',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'114',reg:'C-GMZY',msn:'55114',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'115',reg:'C-GNGV',msn:'55115',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'116',reg:'C-GNAM',msn:'55116',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'117',reg:'C-GTZH',msn:'55117',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'118',reg:'C-GNBE',msn:'55118',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'119',reg:'C-GNBN',msn:'55119',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'120',reg:'C-GTZS',msn:'55120',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'121',reg:'C-GTZU',msn:'55121',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'122',reg:'C-GUAC',msn:'55122',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'123',reg:'C-GUPG',msn:'55123',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'124',reg:'C-GUPK',msn:'55124',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'125',reg:'C-GUPL',msn:'55125',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'126',reg:'C-GVDP',msn:'55126',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'127',reg:'C-GVDQ',msn:'55127',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'128',reg:'C-GVUH',msn:'55128',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'129',reg:'C-GVUN',msn:'55129',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'130',reg:'C-GVUO',msn:'55130',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'131',reg:'C-GWUQ',msn:'55131',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'132',reg:'C-GWUS',msn:'55132',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'133',reg:'C-GWUT',msn:'55133',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'134',reg:'C-FDUW',msn:'55134',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'135',reg:'C-FDUY',msn:'55135',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'136',reg:'C-GYLQ',msn:'55136',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'137',reg:'C-GYLY',msn:'55137',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'138',reg:'C-FHMO',msn:'55138',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'139',reg:'C-FHNB',msn:'55139',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'140',reg:'C-FHOY',msn:'55140',variant:'A220-300',family:'A220',sub:'220-371'},
+{fin:'141',reg:'C-FHYY',msn:'55141',variant:'A220-300',family:'A220',sub:'220-371'},
+// A319 Fleet (retired Sept 2025 - kept for historical logbook imports)
 {fin:'0251',reg:'C-FYNS',msn:'00572',variant:'A319',family:'A320',sub:'319-114'},
 {fin:'0252',reg:'C-FYIY',msn:'00634',variant:'A319',family:'A320',sub:'319-114'},
 {fin:'0255',reg:'C-FYJE',msn:'00656',variant:'A319',family:'A320',sub:'319-114'},
@@ -840,7 +891,125 @@ const AIRCRAFT_CATALOG_AC = [
 {fin:'859',reg:'C-FVNF',msn:'38362',variant:'787-9',family:'B787',sub:'787-9'},
 {fin:'860',reg:'C-GWUU',msn:'66991',variant:'787-9',family:'B787',sub:'787-9'},
 {fin:'861',reg:'C-GYJW',msn:'66992',variant:'787-9',family:'B787',sub:'787-9'},
-{fin:'862',reg:'C-FEGI',msn:'66993',variant:'787-9',family:'B787',sub:'787-9'}
+{fin:'862',reg:'C-FEGI',msn:'66993',variant:'787-9',family:'B787',sub:'787-9'},
+// Boeing 737 MAX 8 Fleet
+{fin:'501',reg:'C-FTJV',msn:'61213',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'502',reg:'C-FSCY',msn:'61214',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'503',reg:'C-FSDB',msn:'61215',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'504',reg:'C-FSDQ',msn:'61216',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'505',reg:'C-FSDW',msn:'61217',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'506',reg:'C-FSEQ',msn:'61218',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'507',reg:'C-FSES',msn:'61219',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'508',reg:'C-FSIL',msn:'61221',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'509',reg:'C-FSIP',msn:'61222',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'510',reg:'C-FSIQ',msn:'61224',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'511',reg:'C-FSJH',msn:'61225',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'512',reg:'C-FSJJ',msn:'61227',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'513',reg:'C-FSKZ',msn:'61228',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'514',reg:'C-FSLU',msn:'61229',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'515',reg:'C-FSNQ',msn:'61230',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'516',reg:'C-FSNU',msn:'61220',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'517',reg:'C-FSOC',msn:'61231',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'518',reg:'C-FSOI',msn:'61223',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'519',reg:'C-GEHI',msn:'61232',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'520',reg:'C-GEHQ',msn:'61226',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'521',reg:'C-GEHV',msn:'61233',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'522',reg:'C-GEHY',msn:'61234',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'523',reg:'C-GEIV',msn:'61235',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'524',reg:'C-GEJL',msn:'61236',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'525',reg:'C-GEJN',msn:'61238',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'526',reg:'C-GEKH',msn:'61239',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'527',reg:'C-GEKX',msn:'61240',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'528',reg:'C-GEKZ',msn:'61241',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'529',reg:'C-GELJ',msn:'61243',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'530',reg:'C-GELQ',msn:'61244',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'531',reg:'C-GELU',msn:'61245',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'532',reg:'C-GEMV',msn:'61246',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'533',reg:'C-GEOJ',msn:'61237',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'534',reg:'C-GEPB',msn:'61247',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'535',reg:'C-GEPF',msn:'61242',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'536',reg:'C-GEPG',msn:'61248',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'537',reg:'C-GMEX',msn:'66476',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'538',reg:'C-GMIQ',msn:'66477',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'539',reg:'C-GMIU',msn:'66478',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+{fin:'540',reg:'C-GMIW',msn:'66479',variant:'737 MAX 8',family:'B737',sub:'737-8'},
+// Jazz Aviation CRJ-900 Fleet (Air Canada Express)
+{fin:'J701',reg:'C-GJAZ',msn:'15129',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J702',reg:'C-FBJZ',msn:'15130',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J703',reg:'C-FCJZ',msn:'15131',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J704',reg:'C-FDJZ',msn:'15132',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J705',reg:'C-FJJZ',msn:'15139',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J706',reg:'C-FKJZ',msn:'15141',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J707',reg:'C-FLJZ',msn:'15143',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J708',reg:'C-FAJZ',msn:'15144',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J709',reg:'C-FTJZ',msn:'15145',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J710',reg:'C-FUJZ',msn:'15146',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J711',reg:'C-GDJZ',msn:'15147',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J712',reg:'C-GFJZ',msn:'15148',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J713',reg:'C-GLJZ',msn:'15149',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J714',reg:'C-GNJZ',msn:'15150',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J715',reg:'C-GOJZ',msn:'15151',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J716',reg:'C-GPJZ',msn:'15152',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J717',reg:'C-FJZD',msn:'15377',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J718',reg:'C-FJZL',msn:'15378',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J719',reg:'C-GJZS',msn:'15379',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J720',reg:'C-GJZT',msn:'15380',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+{fin:'J721',reg:'C-GJZV',msn:'15381',variant:'CRJ-900',family:'CRJ',sub:'CRJ-900LR'},
+// Jazz Aviation Q400 Fleet (Air Canada Express)
+{fin:'J401',reg:'C-GGOY',msn:'4043',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J402',reg:'C-GKUK',msn:'4044',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J403',reg:'C-GGOK',msn:'4050',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J404',reg:'C-GGOI',msn:'4051',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J405',reg:'C-GGOF',msn:'4057',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J406',reg:'C-GGNZ',msn:'4060',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J407',reg:'C-GGNY',msn:'4061',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J408',reg:'C-GGNW',msn:'4062',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J409',reg:'C-GGNF',msn:'4067',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J410',reg:'C-GGND',msn:'4068',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J411',reg:'C-GGMU',msn:'4069',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J412',reg:'C-GGMZ',msn:'4070',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J413',reg:'C-GGMQ',msn:'4079',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J414',reg:'C-GGMN',msn:'4081',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J415',reg:'C-GGMI',msn:'4082',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J416',reg:'C-GGAH',msn:'4091',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J417',reg:'C-GGBF',msn:'4094',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J418',reg:'C-GGCI',msn:'4095',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J419',reg:'C-GGDU',msn:'4096',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J420',reg:'C-GGFJ',msn:'4098',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J421',reg:'C-GGFP',msn:'4099',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J422',reg:'C-GBJZ',msn:'4213',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J423',reg:'C-GJZG',msn:'4219',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J424',reg:'C-GJZX',msn:'4223',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J425',reg:'C-GIJZ',msn:'4229',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J426',reg:'C-GSJZ',msn:'4233',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J427',reg:'C-GJZK',msn:'4240',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J428',reg:'C-GUJZ',msn:'4246',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J429',reg:'C-GVJZ',msn:'4250',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J430',reg:'C-GXJZ',msn:'4256',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J431',reg:'C-GYJZ',msn:'4262',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J432',reg:'C-GJZY',msn:'4267',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J433',reg:'C-GJZA',msn:'4279',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J434',reg:'C-GJZD',msn:'4303',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J489',reg:'C-FSRJ',msn:'4489',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J490',reg:'C-FSRN',msn:'4490',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J491',reg:'C-FSRW',msn:'4491',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J492',reg:'C-FSRY',msn:'4492',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J493',reg:'C-FSRZ',msn:'4493',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J494',reg:'C-GJZH',msn:'4494',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J495',reg:'C-GJZC',msn:'4495',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J496',reg:'C-GJZR',msn:'4496',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J497',reg:'C-GJZF',msn:'4497',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+{fin:'J498',reg:'C-GJZN',msn:'4498',variant:'Q400',family:'DHC-8',sub:'DHC-8-402'},
+// Jazz Aviation E175 Fleet (Air Canada Express) - registrations only, fins TBD
+{fin:'E01',reg:'C-FEKI',msn:'17000103',variant:'E175',family:'E-Jet',sub:'E175SU'},
+{fin:'E02',reg:'C-FEJY',msn:'17000097',variant:'E175',family:'E-Jet',sub:'E175SU'},
+{fin:'E03',reg:'C-FEIX',msn:'17000085',variant:'E175',family:'E-Jet',sub:'E175SU'},
+{fin:'E04',reg:'C-FEKH',msn:'17000104',variant:'E175',family:'E-Jet',sub:'E175SU'},
+{fin:'E05',reg:'C-FJBO',msn:'17000200',variant:'E175',family:'E-Jet',sub:'E175SU'},
+{fin:'E06',reg:'C-FRQN',msn:'17000150',variant:'E175',family:'E-Jet',sub:'E175SU'},
+{fin:'E07',reg:'C-FRQW',msn:'17000154',variant:'E175',family:'E-Jet',sub:'E175SU'},
+{fin:'E08',reg:'C-FUJA',msn:'17000272',variant:'E175',family:'E-Jet',sub:'E175SU'},
+{fin:'E09',reg:'C-FXJC',msn:'17000287',variant:'E175',family:'E-Jet',sub:'E175SU'}
 ];
 
 // Build lookup indexes
