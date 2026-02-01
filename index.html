@@ -368,6 +368,7 @@
                         <datalist id="employerList">
                             <option value="Air Canada Rouge">
                             <option value="Air Canada Mainline">
+                            <option value="Jazz Aviation">
                             <option value="Alaska Airlines">
                             <option value="Allegiant Air">
                             <option value="American Airlines">
@@ -1303,8 +1304,9 @@ modeToggle.addEventListener('click',e=>{
 
 // Show catalog button only for Air Canada employers
 function updateCatalogVisibility(){
-    const isAirCanada=employer.value.toLowerCase().includes('air canada');
-    $('catalogBtn').style.display=isAirCanada?'inline-flex':'none';
+    const emp=employer.value.toLowerCase();
+    const showCatalog=emp.includes('air canada')||emp.includes('jazz');
+    $('catalogBtn').style.display=showCatalog?'inline-flex':'none';
 }
 employer.addEventListener('input',()=>{savePrefs();updateCatalogVisibility()});
 employer.addEventListener('change',()=>{savePrefs();updateCatalogVisibility()});
