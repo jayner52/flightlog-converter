@@ -112,8 +112,10 @@
         .btn-small{padding:.25rem .5rem;font-size:.7rem}
         .btn-row{display:flex;gap:.5rem;margin-top:1.25rem;flex-wrap:wrap}
         .dropdown{position:relative;display:inline-block}
-        .dropdown-content{display:none;position:absolute;top:100%;left:0;background:var(--card);border:1px solid var(--border);border-radius:8px;min-width:160px;z-index:50;max-height:250px;overflow-y:auto;margin-top:4px;box-shadow:var(--shadow)}
-        .dropdown.open .dropdown-content{display:block}
+        .dropdown-content{display:none;position:absolute;top:100%;left:0;background:var(--card);border:1px solid var(--border);border-radius:8px;min-width:160px;z-index:50;max-height:280px;margin-top:4px;box-shadow:var(--shadow);flex-direction:column}
+        .dropdown.open .dropdown-content{display:flex}
+        .dropdown-list{overflow-y:auto;flex:1}
+        .dropdown-footer{border-top:1px solid var(--border);padding:.35rem .5rem;background:var(--card);border-radius:0 0 8px 8px}
         .dropdown-item{padding:.5rem .75rem;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;transition:background .15s}
         .dropdown-item:hover{background:var(--hover)}
         .dropdown-item input{width:14px;height:14px}
@@ -130,9 +132,6 @@
         th.center,td.center{text-align:center}
         th.sticky-col,td.sticky-col{position:sticky;left:0;z-index:10;background:var(--bg2);box-shadow:2px 0 4px rgba(0,0,0,.1)}
         td.sticky-col{background:var(--card)}
-        th .col-delete{display:none;position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:.6rem;padding:1px 3px;border-radius:2px}
-        th:hover .col-delete{display:inline}
-        th .col-delete:hover{color:var(--red);background:rgba(220,38,38,.1)}
         .header-label{cursor:pointer;border-bottom:1px dashed transparent;transition:border-color .15s}
         .header-label:hover{border-bottom-color:var(--primary)}
         td{padding:.3rem .3rem;border-bottom:1px solid var(--border);font-family:'SF Mono',Monaco,monospace;font-size:.7rem;white-space:nowrap}
@@ -273,6 +272,29 @@
         .hidden{display:none!important}
         @media(max-width:768px){.container{padding:.75rem}.toolbar{flex-wrap:wrap;gap:.25rem}.toolbar-sep{display:none}.shortcuts-help{display:none}}
         @media(max-width:640px){.container{padding:.5rem}.format-row{flex-direction:column}.format-group{min-width:100%}.settings-row{flex-direction:column}.table-scroll{max-height:300px}th,td{padding:.25rem .2rem;font-size:.65rem}.btn{padding:.4rem .6rem;font-size:.7rem}.btn-small{padding:.2rem .4rem;font-size:.65rem}.card{padding:.75rem}}
+        .help-btn{width:22px;height:22px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-left:auto}
+        .help-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff}
+        .help-modal{max-width:520px;max-height:85vh;display:flex;flex-direction:column}
+        .help-content{padding:1.25rem;overflow-y:auto;flex:1}
+        .help-section{margin-bottom:1rem}
+        .help-section:last-child{margin-bottom:0}
+        .help-section h4{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:.4rem;display:flex;align-items:center;gap:.35rem}
+        .help-section h4 svg{width:14px;height:14px;color:var(--primary)}
+        .help-section p,.help-section li{font-size:.75rem;color:var(--text2);line-height:1.5}
+        .help-section ul{margin:0;padding-left:1.25rem}
+        .help-section li{margin-bottom:.25rem}
+        .help-kbd{background:var(--bg2);padding:.15rem .35rem;border-radius:4px;font-family:'SF Mono',Monaco,monospace;font-size:.7rem;border:1px solid var(--border)}
+        .help-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+        .help-item{background:var(--bg2);padding:.5rem .6rem;border-radius:6px;border:1px solid var(--border)}
+        .help-item strong{display:block;font-size:.7rem;color:var(--text);margin-bottom:.15rem}
+        .help-item span{font-size:.65rem;color:var(--muted)}
+        .help-footer{padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:.75rem}
+        .help-footer a{color:var(--primary);text-decoration:none}
+        .help-footer a:hover{text-decoration:underline}
+        .input-with-clear{position:relative;display:flex;align-items:center}
+        .input-with-clear input{flex:1;padding-right:1.5rem}
+        .input-clear-btn{position:absolute;right:.4rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:0;line-height:1;opacity:.6;transition:opacity .15s}
+        .input-clear-btn:hover{opacity:1;color:var(--text)}
     </style>
 </head>
 <body>
@@ -296,14 +318,10 @@
         <div class="section active" id="section1">
             <div class="card">
                 <div class="card-header"><h2 class="card-title">Get Started</h2></div>
-                <div class="format-row">
+                <div class="format-row" id="sourceFormatRow">
                     <div class="format-group">
                         <label>Source Format</label>
                         <select id="sourceFormat"><option value="ac-pqrm">Air Canada PQRM</option><option value="other" disabled>Other (Coming Soon)</option></select>
-                    </div>
-                    <div class="format-group">
-                        <label>Export Format</label>
-                        <select id="exportFormat"><option value="myflightbook">MyFlightBook</option><option value="other" disabled>Other (Coming Soon)</option></select>
                     </div>
                 </div>
                 <div class="mode-toggle" id="modeToggle">
@@ -343,7 +361,25 @@
                 <div class="settings-row">
                     <div class="setting-group">
                         <label>Employer</label>
-                        <select id="employer"><option value="Rouge">Air Canada Rouge</option><option value="Air Canada">Air Canada Mainline</option></select>
+                        <div class="input-with-clear">
+                            <input type="text" id="employer" list="employerList" value="Air Canada Rouge" placeholder="Type or select...">
+                            <button type="button" class="input-clear-btn" id="employerClearBtn" title="Clear to see all options">×</button>
+                        </div>
+                        <datalist id="employerList">
+                            <option value="Air Canada Rouge">
+                            <option value="Air Canada Mainline">
+                            <option value="Alaska Airlines">
+                            <option value="Allegiant Air">
+                            <option value="American Airlines">
+                            <option value="Delta Air Lines">
+                            <option value="Frontier Airlines">
+                            <option value="Hawaiian Airlines">
+                            <option value="JetBlue Airways">
+                            <option value="Southwest Airlines">
+                            <option value="Spirit Airlines">
+                            <option value="United Airlines">
+                            <option value="WestJet">
+                        </datalist>
                     </div>
                     <div class="setting-group small">
                         <label>&nbsp;</label>
@@ -369,10 +405,11 @@
                     <span class="dup-count" id="dupCount" style="display:none">0</span>
                     <span class="err-count" id="errCount" style="display:none">0</span>
                     <span class="rp-count" id="rpCount" style="display:none">0</span>
+                    <button class="help-btn" id="helpBtn" title="Quick reference guide">?</button>
                 </div>
                 <div class="model-settings" id="modelSettings">
                     <span class="model-label">Model Output:</span>
-                    <div class="toggle-pills" id="modelModePills">
+                    <div class="toggle-pills" id="modelModePills" title="Generic = aircraft family (A320). Specific = exact variant from catalog (A321).">
                         <button class="pill" data-mode="generic">Generic</button>
                         <button class="pill active" data-mode="specific">Specific</button>
                     </div>
@@ -418,7 +455,7 @@
                 <div class="stats-row" id="statsRow"></div>
                 <div class="optional-panel">
                     <div class="optional-header">
-                        <h4>Optional Fields</h4>
+                        <h4 title="Add more columns like approaches, landings, training flags, etc.">Optional Fields</h4>
                         <div class="search-box"><input type="text" id="fieldSearch" placeholder="Search..."></div>
                     </div>
                     <div class="category-tabs" id="categoryTabs"></div>
@@ -437,8 +474,9 @@
                     <div style="display:flex;align-items:center;gap:.2rem">
                         <h2 class="card-title">CSV Preview</h2>
                         <span class="row-count" id="previewCount">0</span>
+                        <span style="font-size:.7rem;color:var(--muted);margin-left:.5rem">MyFlightBook compatible</span>
                     </div>
-                    <button class="btn btn-success" id="downloadBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download</button>
+                    <button class="btn btn-success" id="downloadBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download CSV</button>
                 </div>
                 <div class="table-wrapper" style="margin-top:.3rem">
                     <div class="table-scroll" style="max-height:240px">
@@ -491,6 +529,8 @@
                             <option value="">Select type...</option>
                             <option value="Bug Report">Bug Report</option>
                             <option value="Missing Aircraft">Missing Aircraft</option>
+                            <option value="Request Airline Import">Request Airline Import</option>
+                            <option value="Request Export Format">Request Export Format</option>
                             <option value="Feature Request">Feature Request</option>
                             <option value="Other">Other</option>
                         </select>
@@ -498,6 +538,14 @@
                     <div class="feedback-field" id="aircraftField" style="display:none">
                         <label for="feedbackAircraft">Aircraft Info</label>
                         <input type="text" id="feedbackAircraft" name="aircraft" placeholder="Registration, fin #, or description...">
+                    </div>
+                    <div class="feedback-field" id="airlineField" style="display:none">
+                        <label for="feedbackAirline">Airline Name</label>
+                        <input type="text" id="feedbackAirline" name="airline" placeholder="e.g. Delta, United, WestJet...">
+                    </div>
+                    <div class="feedback-field" id="exportField" style="display:none">
+                        <label for="feedbackExport">Logbook / Format Name</label>
+                        <input type="text" id="feedbackExport" name="export_format" placeholder="e.g. LogTen Pro, ForeFlight...">
                     </div>
                     <div class="feedback-field">
                         <label for="feedbackDetails">Details <span style="color:var(--red)">*</span></label>
@@ -529,6 +577,46 @@
                         Buy me a coffee
                     </a>
                     <button class="donate-dismiss" id="donateDismiss">Maybe next time</button>
+                </div>
+            </div>
+        </div>
+        <!-- Help / Quick Reference Modal -->
+        <div class="modal-overlay" id="helpModal" style="display:none">
+            <div class="modal help-modal">
+                <div class="modal-header">
+                    <h3><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Quick Reference</h3>
+                    <button class="modal-close" id="closeHelpBtn"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>
+                <div class="help-content">
+                    <div class="help-section">
+                        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Editing</h4>
+                        <p>Click any cell to edit it directly. Use <span class="help-kbd">Tab</span> or arrow keys to navigate between cells. Press <span class="help-kbd">Enter</span> to confirm, <span class="help-kbd">Esc</span> to cancel.</p>
+                    </div>
+                    <div class="help-section">
+                        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Role (PIC / SIC / RP)</h4>
+                        <div class="help-grid">
+                            <div class="help-item"><strong>PIC</strong><span>Pilot in Command - you were the captain</span></div>
+                            <div class="help-item"><strong>SIC</strong><span>Second in Command - you were the first officer</span></div>
+                            <div class="help-item"><strong>RP</strong><span>Relief Pilot - augmented crew, not PIC/SIC</span></div>
+                            <div class="help-item"><strong>RP? badge</strong><span>Auto-detected - your name wasn't listed as PIC/SIC</span></div>
+                        </div>
+                    </div>
+                    <div class="help-section">
+                        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Model Output</h4>
+                        <p><strong>Generic</strong> shows aircraft family (A320, B787). <strong>Specific</strong> shows exact variant from the catalog (A321, 787-9). Use Specific for accurate logbook records.</p>
+                    </div>
+                    <div class="help-section">
+                        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Customizing Columns</h4>
+                        <p>Use <strong>+ Columns</strong> in the toolbar to show/hide columns. Scroll down to <strong>Optional Fields</strong> to add more columns like approaches, landings, training flags. Click column headers to rename them.</p>
+                    </div>
+                    <div class="help-section">
+                        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="8" y1="16" x2="16" y2="16"/></svg> Keyboard Shortcuts</h4>
+                        <p><span class="help-kbd">Ctrl+Z</span> Undo &nbsp; <span class="help-kbd">Ctrl+N</span> Add row &nbsp; <span class="help-kbd">Del</span> Clear cell &nbsp; <span class="help-kbd">Space</span> Toggle checkbox</p>
+                    </div>
+                </div>
+                <div class="help-footer">
+                    <span>Something unclear or broken?</span>
+                    <a href="#" id="helpFeedbackLink">Send feedback</a>
                 </div>
             </div>
         </div>
@@ -565,7 +653,7 @@ function normalizeModel(t){if(!t)return'';const n=t.toLowerCase().replace(/[\s\-
 // Air Canada fleet data from FCOM/AOM appendix cross-reference tables
 // Provides specific variant lookup by registration, fin, or nose number
 
-const AIRCRAFT_CATALOG_RAW = [
+const AIRCRAFT_CATALOG_AC = [
 // A319 Fleet
 {fin:'0251',reg:'C-FYNS',msn:'00572',variant:'A319',family:'A320',sub:'319-114'},
 {fin:'0252',reg:'C-FYIY',msn:'00634',variant:'A319',family:'A320',sub:'319-114'},
@@ -756,9 +844,9 @@ const AIRCRAFT_CATALOG_RAW = [
 ];
 
 // Build lookup indexes
-const aircraftCatalog = {byReg:{},byFin:{},byNose:{},entries:AIRCRAFT_CATALOG_RAW};
+const aircraftCatalog = {byReg:{},byFin:{},byNose:{},entries:AIRCRAFT_CATALOG_AC};
 function buildCatalogIndexes(){
-    AIRCRAFT_CATALOG_RAW.forEach(ac=>{
+    AIRCRAFT_CATALOG_AC.forEach(ac=>{
         const regKey=(ac.reg||'').replace(/-/g,'').toUpperCase();
         const finKey=(ac.fin||'').replace(/^0+/,'');
         if(regKey)aircraftCatalog.byReg[regKey]=ac;
@@ -1025,6 +1113,8 @@ function loadPrefs(){
             modelOutputMode=p.modelOutputMode;
             $('modelModePills').querySelectorAll('.pill').forEach(pl=>pl.classList.toggle('active',pl.dataset.mode===modelOutputMode));
         }
+        // Update catalog visibility after employer is restored
+        if(typeof updateCatalogVisibility==='function')updateCatalogVisibility();
     }catch(e){}
 }
 function savePrefs(){
@@ -1035,13 +1125,24 @@ modeToggle.addEventListener('click',e=>{
     const btn=e.target.closest('button');if(!btn)return;
     entryMode=btn.dataset.mode;
     modeToggle.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===entryMode));
+    $('sourceFormatRow').classList.toggle('hidden',entryMode==='manual');
     uploadSection.classList.toggle('hidden',entryMode==='manual');
     manualSection.classList.toggle('hidden',entryMode==='upload');
     processBtn.classList.toggle('hidden',entryMode==='manual');
     manualStartBtn.classList.toggle('hidden',entryMode==='upload');
 });
 
-employer.addEventListener('change',savePrefs);
+// Show catalog button only for Air Canada employers
+function updateCatalogVisibility(){
+    const isAirCanada=employer.value.toLowerCase().includes('air canada');
+    $('catalogBtn').style.display=isAirCanada?'inline-flex':'none';
+}
+employer.addEventListener('input',()=>{savePrefs();updateCatalogVisibility()});
+employer.addEventListener('change',()=>{savePrefs();updateCatalogVisibility()});
+employer.addEventListener('focus',()=>employer.select());// Select all on focus for easy replacement
+$('employerClearBtn').addEventListener('click',()=>{employer.value='';employer.focus();savePrefs();updateCatalogVisibility()});
+updateCatalogVisibility();// Initial check
+
 // Toggle: active (right/blue) = show full Name, inactive (left) = show Self
 selfToggle.addEventListener('click',()=>{showSelf=!showSelf;selfToggle.classList.toggle('active',!showSelf);savePrefs();if(flights.length)renderTable()});
 
@@ -1134,7 +1235,7 @@ function renderCatalogTable(){
     const tbody=$('catalogTableBody');
     tbody.innerHTML='';
     let count=0;
-    AIRCRAFT_CATALOG_RAW.forEach(ac=>{
+    AIRCRAFT_CATALOG_AC.forEach(ac=>{
         if(familyFilter&&ac.family!==familyFilter)return;
         if(search){
             const searchStr=`${ac.reg} ${ac.fin} ${ac.variant} ${ac.sub} ${ac.msn}`.toLowerCase();
@@ -1165,10 +1266,24 @@ $('catalogModal').addEventListener('click',e=>{if(e.target===$('catalogModal'))c
 $('catalogSearch').addEventListener('input',renderCatalogTable);
 $('catalogFamilyFilter').addEventListener('change',renderCatalogTable);
 
+// Help modal functions
+function openHelpModal(){
+    $('helpModal').style.display='flex';
+}
+function closeHelpModal(){
+    $('helpModal').style.display='none';
+}
+$('helpBtn').addEventListener('click',openHelpModal);
+$('closeHelpBtn').addEventListener('click',closeHelpModal);
+$('helpModal').addEventListener('click',e=>{if(e.target===$('helpModal'))closeHelpModal()});
+$('helpFeedbackLink').addEventListener('click',e=>{e.preventDefault();closeHelpModal();openFeedbackModal()});
+
 // Feedback modal functions
 function openFeedbackModal(){
     $('feedbackForm').reset();
     $('aircraftField').style.display='none';
+    $('airlineField').style.display='none';
+    $('exportField').style.display='none';
     $('feedbackStatus').style.display='none';
     $('feedbackSubmitBtn').disabled=false;
     $('feedbackSubmitBtn').textContent='Send Feedback';
@@ -1182,6 +1297,8 @@ function closeFeedbackModal(){
 function handleFeedbackTypeChange(){
     const type=$('feedbackType').value;
     $('aircraftField').style.display=type==='Missing Aircraft'?'block':'none';
+    $('airlineField').style.display=type==='Request Airline Import'?'block':'none';
+    $('exportField').style.display=type==='Request Export Format'?'block':'none';
 }
 
 async function submitFeedback(e){
@@ -1417,14 +1534,6 @@ flightsBody.addEventListener('keydown',e=>{
 });
 
 flightsHead.addEventListener('click',e=>{
-    const delBtn=e.target.closest('.col-delete');
-    if(delBtn){
-        const k=delBtn.dataset.k;
-        hiddenCols.add(k);
-        savePrefs();
-        renderTable();
-        return;
-    }
     const headerLabel=e.target.closest('.header-label');
     if(headerLabel&&!headerLabel.querySelector('input')){
         const k=headerLabel.dataset.k;
@@ -1499,7 +1608,7 @@ function createEmptyFlight(){
 async function handleFiles(f){
     for(let x of f)if(!files.find(y=>y.name===x.name))files.push(x);
     renderFileList();rawFlights=[];pilotCounts={};
-    for(let file of files){const c=await readFile(file);parseFileRaw(c)}
+    for(let file of files){const c=await readFile(file);parseAirCanadaPQRM(c)}
     let maxCount=0;detectedPilot='';
     for(let name in pilotCounts)if(pilotCounts[name]>maxCount){maxCount=pilotCounts[name];detectedPilot=name}
     if(detectedPilot){pilotDetection.classList.add('visible');pilotNameInput.value=detectedPilot;detectedInfo.textContent=`${maxCount}/${rawFlights.length} flights`}
@@ -1515,7 +1624,7 @@ function renderFileList(){
     });
 }
 function readFile(f){return new Promise(r=>{const x=new FileReader();x.onload=e=>r(e.target.result);x.readAsText(f)})}
-function parseFileRaw(c){
+function parseAirCanadaPQRM(c){
     const lines=c.split(/\r?\n/);let hdr=-1;
     for(let i=0;i<Math.min(10,lines.length);i++)if(lines[i].includes('Date')&&lines[i].includes('Type')){hdr=i;break}
     if(hdr===-1)return;
@@ -1640,7 +1749,8 @@ function getAllColKeys(){
 
 function renderColDropdown(){
     const all=getAllColKeys();
-    colDropdownContent.innerHTML=all.map(c=>`<label class="dropdown-item"><input type="checkbox" data-k="${c.k}" ${hiddenCols.has(c.k)?'':'checked'}> ${c.l}</label>`).join('');
+    let listHtml=all.map(c=>`<label class="dropdown-item"><input type="checkbox" data-k="${c.k}" ${hiddenCols.has(c.k)?'':'checked'}> ${c.l}</label>`).join('');
+    colDropdownContent.innerHTML=`<div class="dropdown-list">${listHtml}</div><div class="dropdown-footer"><a href="#" id="resetColsBtn" style="color:var(--muted);font-size:.75rem;text-decoration:none">Reset to defaults</a></div>`;
     colDropdownContent.querySelectorAll('input').forEach(inp=>{
         inp.addEventListener('change',e=>{
             const k=e.target.dataset.k;
@@ -1648,6 +1758,17 @@ function renderColDropdown(){
             else hiddenCols.add(k);
             savePrefs();renderTable();
         });
+    });
+    $('resetColsBtn').addEventListener('click',e=>{
+        e.preventDefault();
+        hiddenCols=new Set();
+        optFields=[];
+        customLabels={};
+        savePrefs();
+        renderColDropdown();
+        renderTable();
+        renderSelFields();
+        showStatus('Columns reset to defaults','success');
     });
 }
 
@@ -1693,9 +1814,8 @@ function renderTable(){
     const cols=getVisibleCols();
     let h='<tr><th class="sticky-col">#</th>';
     cols.forEach(c=>{
-        const del=c.deletable!==false?`<button class="col-delete" data-k="${c.k}">×</button>`:'';
         const label=customLabels[c.k]||c.l;
-        h+=`<th class="${['cb','toggle','yn'].includes(c.t)?'center':''}"><span class="header-label" data-k="${c.k}" title="Click to edit">${label}</span>${del}</th>`;
+        h+=`<th class="${['cb','toggle','yn'].includes(c.t)?'center':''}"><span class="header-label" data-k="${c.k}" title="Click to edit">${label}</span></th>`;
     });
     h+='<th></th></tr>';flightsHead.innerHTML=h;
     
