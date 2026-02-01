@@ -303,6 +303,9 @@
         .file-item-employer{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
         .file-item-employer input.file-employer-input{padding:.25rem .4rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.7rem;min-width:140px;max-width:160px}
         .file-item-employer input.file-employer-input:focus{border-color:var(--primary);outline:none}
+        .apply-all-employer{display:flex;align-items:center;gap:.5rem;margin-top:.5rem;padding:.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px}
+        .apply-all-employer input{flex:1;padding:.35rem .5rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.75rem;min-width:120px}
+        .apply-all-employer input:focus{border-color:var(--primary);outline:none}
         .jazz-badge{font-size:.55rem;padding:.1rem .25rem;background:rgba(139,92,246,.15);border:1px solid var(--purple);color:var(--purple);border-radius:3px;margin-left:.25rem}
         /* Summary modal styles */
         .summary-modal{max-width:800px;max-height:90vh}
@@ -359,6 +362,10 @@
                         <input type="file" class="file-input" id="fileInput" accept=".xls,.xlsx,.csv,.txt" multiple>
                     </div>
                     <div class="file-list" id="fileList"></div>
+                    <div class="apply-all-employer" id="applyAllEmployer" style="display:none">
+                        <input type="text" list="employerList" id="applyAllInput" placeholder="Type employer...">
+                        <button class="btn btn-small btn-secondary" id="applyAllBtn">Apply to all</button>
+                    </div>
                     <div class="pilot-detection" id="pilotDetection">
                         <h4><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Detected Pilot</h4>
                         <input type="text" id="pilotName" placeholder="Your name">
@@ -1392,6 +1399,13 @@ employer.addEventListener('change',()=>{savePrefs();updateCatalogVisibility();re
 employer.addEventListener('focus',()=>employer.select());// Select all on focus for easy replacement
 $('employerClearBtn').addEventListener('click',()=>{employer.value='';employer.focus();savePrefs();updateCatalogVisibility()});
 $('perUploadCheck').addEventListener('change',e=>{perUploadMode=e.target.checked;renderFileList()});
+$('applyAllBtn').addEventListener('click',()=>{
+    const emp=$('applyAllInput').value.trim();
+    if(!emp){showStatus('Enter an employer to apply.','warning');return}
+    fileUploads.forEach(fu=>fu.employer=emp);
+    renderFileList();
+    showStatus(`Applied "${emp}" to all ${fileUploads.length} files.`,'success');
+});
 updateCatalogVisibility();// Initial check
 
 // Toggle: active (right/blue) = show full Name, inactive (left) = show Self
@@ -1878,6 +1892,8 @@ function renderFileList(){
     // Only show per-upload toggle if multiple files
     $('perUploadToggle').style.display=files.length>1?'flex':'none';
     if(files.length<=1){$('perUploadCheck').checked=false;perUploadMode=false}
+    // Show apply-all section when per-upload mode is enabled
+    $('applyAllEmployer').style.display=(perUploadMode&&files.length>1)?'flex':'none';
 
     fileList.innerHTML=files.map((f,i)=>{
         const fu=fileUploads[i];
