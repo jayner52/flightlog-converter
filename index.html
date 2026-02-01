@@ -308,7 +308,7 @@
         .apply-all-employer input{flex:1;padding:.35rem .5rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.75rem;min-width:120px}
         .apply-all-employer input:focus{border-color:var(--primary);outline:none}
         .jazz-badge{font-size:.55rem;padding:.1rem .25rem;background:rgba(139,92,246,.15);border:1px solid var(--purple);color:var(--purple);border-radius:3px;margin-left:.25rem}
-        .auto-badge{font-size:.55rem;padding:.1rem .25rem;background:rgba(34,197,94,.15);border:1px solid var(--green);color:var(--green);border-radius:3px;margin-left:.25rem;cursor:help}
+        .auto-badge{font-size:.6rem;padding:.15rem .35rem;background:rgba(34,197,94,.15);border:1px solid var(--green);color:var(--green);border-radius:3px;margin-left:.25rem;cursor:help;flex-shrink:0;white-space:nowrap}
         .file-item-needs-input{background:rgba(234,179,8,.15)!important;border-color:var(--yellow)!important}
         .file-employer-input.needs-input{border-color:var(--yellow);background:rgba(234,179,8,.1)}
         .file-employer-input.needs-input::placeholder{color:var(--yellow)}
@@ -1965,7 +1965,7 @@ function renderFileList(){
         let html=`<div class="${itemClass}"><div class="file-item-employer"><span><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${f.name}</span>`;
         // Show employer input when multiple files or detection happened
         if(showEmployerInputs&&fu){
-            const autoBadge=fu.autoDetected?'<span class="auto-badge" title="Detected from aircraft data - click to change">Auto</span>':'';
+            const autoBadge=fu.autoDetected?'<span class="auto-badge" title="Detected from aircraft data - you can change it">✓ Detected</span>':'';
             const inputClass=needsInput?'file-employer-input needs-input':'file-employer-input';
             const placeholder=needsInput?'Enter employer...':'Employer...';
             html+=`<input type="text" list="employerList" data-file-idx="${i}" class="${inputClass}" value="${fu.employer||''}" placeholder="${placeholder}">${autoBadge}`;
