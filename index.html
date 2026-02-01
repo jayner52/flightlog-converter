@@ -15,6 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root,html[data-theme="dark"]{--bg:#0b0f19;--bg2:#141922;--card:#1a1f2e;--hover:#242938;--red:#ef4444;--blue:#3b82f6;--green:#22c55e;--yellow:#eab308;--purple:#a855f7;--orange:#f97316;--cyan:#06b6d4;--text:#f1f5f9;--text2:#94a3b8;--muted:#64748b;--border:rgba(148,163,184,.12);--shadow:0 1px 3px rgba(0,0,0,.3);--primary:#3b82f6;--primary-hover:#2563eb}
         html[data-theme="light"]{--bg:#f8fafc;--bg2:#ffffff;--card:#ffffff;--hover:#f1f5f9;--red:#dc2626;--blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--purple:#9333ea;--orange:#ea580c;--cyan:#0891b2;--text:#0f172a;--text2:#475569;--muted:#64748b;--border:rgba(15,23,42,.08);--shadow:0 1px 3px rgba(0,0,0,.05);--primary:#2563eb;--primary-hover:#1d4ed8}
@@ -295,6 +296,28 @@
         .input-with-clear input{flex:1;padding-right:1.5rem}
         .input-clear-btn{position:absolute;right:.4rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:0;line-height:1;opacity:.6;transition:opacity .15s}
         .input-clear-btn:hover{opacity:1;color:var(--text)}
+        /* Per-upload employer styles */
+        .per-upload-toggle{margin-top:.5rem;display:flex;align-items:center;gap:.5rem}
+        .per-upload-toggle label{font-size:.75rem;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:.35rem}
+        .per-upload-toggle input{width:14px;height:14px;accent-color:var(--primary)}
+        .file-item-employer{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+        .file-item-employer input.file-employer-input{padding:.25rem .4rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.7rem;min-width:140px;max-width:160px}
+        .file-item-employer input.file-employer-input:focus{border-color:var(--primary);outline:none}
+        .jazz-badge{font-size:.55rem;padding:.1rem .25rem;background:rgba(139,92,246,.15);border:1px solid var(--purple);color:var(--purple);border-radius:3px;margin-left:.25rem}
+        /* Summary modal styles */
+        .summary-modal{max-width:800px;max-height:90vh}
+        .summary-content{padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.25rem;overflow-y:auto;max-height:calc(90vh - 80px)}
+        .chart-container{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem}
+        .chart-container h4{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:.75rem;display:flex;align-items:center;gap:.35rem}
+        .chart-container h4 svg{width:14px;height:14px;color:var(--primary)}
+        .chart-canvas-wrapper{position:relative;height:220px}
+        .chart-legend{margin-top:.75rem;display:flex;flex-wrap:wrap;gap:.5rem;font-size:.7rem}
+        .chart-legend-item{display:flex;align-items:center;gap:.25rem}
+        .chart-legend-dot{width:10px;height:10px;border-radius:50%}
+        .summary-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:.5rem;margin-bottom:1rem}
+        .summary-stat{background:var(--bg2);padding:.6rem;border-radius:6px;text-align:center;border:1px solid var(--border)}
+        .summary-stat-value{font-size:1.1rem;font-weight:700;color:var(--primary);font-family:'SF Mono',Monaco,monospace}
+        .summary-stat-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}
     </style>
 </head>
 <body>
@@ -362,7 +385,7 @@
                     <div class="setting-group">
                         <label>Employer</label>
                         <div class="input-with-clear">
-                            <input type="text" id="employer" list="employerList" value="Air Canada Rouge" placeholder="Type or select...">
+                            <input type="text" id="employer" list="employerList" value="" placeholder="Type or select...">
                             <button type="button" class="input-clear-btn" id="employerClearBtn" title="Clear to see all options">×</button>
                         </div>
                         <datalist id="employerList">
@@ -381,6 +404,9 @@
                             <option value="United Airlines">
                             <option value="WestJet">
                         </datalist>
+                        <div class="per-upload-toggle" id="perUploadToggle">
+                            <label><input type="checkbox" id="perUploadCheck"> Different employer per file</label>
+                        </div>
                     </div>
                     <div class="setting-group small">
                         <label>&nbsp;</label>
@@ -447,6 +473,8 @@
                     </div>
                     <div class="toolbar-sep"></div>
                     <a href="https://myflightbook.com/logbook/mvc/pub/ImportTable" target="_blank" class="btn btn-small btn-secondary" style="text-decoration:none;color:var(--cyan)"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> MFB Fields</a>
+                    <div class="toolbar-sep"></div>
+                    <button class="btn btn-small btn-secondary" id="summaryBtn" title="View flight statistics and charts"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> Summary</button>
                 </div>
                 <div class="table-wrapper">
                     <div class="table-scroll" id="tableScroll">
@@ -482,6 +510,25 @@
                 <div class="table-wrapper" style="margin-top:.3rem">
                     <div class="table-scroll" style="max-height:240px">
                         <table><thead id="previewHead"></thead><tbody id="previewBody"></tbody></table>
+                    </div>
+                </div>
+                <!-- Export Summary with Charts -->
+                <div class="export-summary" style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+                    <h3 style="font-size:.85rem;font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:.35rem"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M18 20V10" stroke="currentColor" fill="none" stroke-width="2"/><path d="M12 20V4" stroke="currentColor" fill="none" stroke-width="2"/><path d="M6 20v-6" stroke="currentColor" fill="none" stroke-width="2"/></svg> Flight Summary</h3>
+                    <div class="summary-stats" id="exportSummaryStats"></div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-top:1rem">
+                        <div class="chart-container">
+                            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Hours by Aircraft</h4>
+                            <div class="chart-canvas-wrapper"><canvas id="exportAircraftChart"></canvas></div>
+                        </div>
+                        <div class="chart-container">
+                            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Hours by Role</h4>
+                            <div class="chart-canvas-wrapper"><canvas id="exportRoleChart"></canvas></div>
+                        </div>
+                        <div class="chart-container" id="exportEmployerChartContainer" style="display:none">
+                            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Hours by Employer</h4>
+                            <div class="chart-canvas-wrapper"><canvas id="exportEmployerChart"></canvas></div>
+                        </div>
                     </div>
                 </div>
                 <div class="btn-row"><button class="btn btn-secondary" id="backBtn2">← Back</button></div>
@@ -627,6 +674,32 @@
                 <div class="help-footer">
                     <span>Something unclear or broken?</span>
                     <a href="#" id="helpFeedbackLink">Send feedback</a>
+                </div>
+            </div>
+        </div>
+        <!-- Summary / Charts Modal -->
+        <div class="modal-overlay" id="summaryModal" style="display:none">
+            <div class="modal summary-modal">
+                <div class="modal-header">
+                    <h3><svg class="icon" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> Flight Summary</h3>
+                    <button class="modal-close" id="closeSummaryBtn"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>
+                <div class="summary-content">
+                    <div style="grid-column:1/-1">
+                        <div class="summary-stats" id="summaryStats"></div>
+                    </div>
+                    <div class="chart-container">
+                        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Hours by Aircraft</h4>
+                        <div class="chart-canvas-wrapper"><canvas id="aircraftChart"></canvas></div>
+                    </div>
+                    <div class="chart-container">
+                        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Hours by Role</h4>
+                        <div class="chart-canvas-wrapper"><canvas id="roleChart"></canvas></div>
+                    </div>
+                    <div class="chart-container" id="employerChartContainer" style="display:none">
+                        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Hours by Employer</h4>
+                        <div class="chart-canvas-wrapper"><canvas id="employerChart"></canvas></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1232,6 +1305,12 @@ const BASE_COLS=[
 let files=[],rawFlights=[],flights=[],optFields=[],activeCat='Time',showSelf=true,csvData=[],customLabels={};
 let detectedPilot='',pilotCounts={},entryMode='upload',hiddenCols=new Set();
 let selectedCell={row:-1,col:-1},currentEdit=null,myName='';
+// Multi-employer per-upload support
+let fileUploads=[]; // [{file:File, employer:string, sourceIdx:number}]
+let perUploadMode=false;
+// Chart instances
+let aircraftChartInstance=null,roleChartInstance=null,employerChartInstance=null;
+let exportAircraftChart=null,exportRoleChart=null,exportEmployerChart=null;
 
 const $=id=>document.getElementById(id);
 const uploadZone=$('uploadZone'),fileInput=$('fileInput'),fileList=$('fileList'),
@@ -1308,10 +1387,11 @@ function updateCatalogVisibility(){
     const showCatalog=emp.includes('air canada')||emp.includes('jazz');
     $('catalogBtn').style.display=showCatalog?'inline-flex':'none';
 }
-employer.addEventListener('input',()=>{savePrefs();updateCatalogVisibility()});
-employer.addEventListener('change',()=>{savePrefs();updateCatalogVisibility()});
+employer.addEventListener('input',()=>{savePrefs();updateCatalogVisibility();renderFileList()});
+employer.addEventListener('change',()=>{savePrefs();updateCatalogVisibility();renderFileList()});
 employer.addEventListener('focus',()=>employer.select());// Select all on focus for easy replacement
 $('employerClearBtn').addEventListener('click',()=>{employer.value='';employer.focus();savePrefs();updateCatalogVisibility()});
+$('perUploadCheck').addEventListener('change',e=>{perUploadMode=e.target.checked;renderFileList()});
 updateCatalogVisibility();// Initial check
 
 // Toggle: active (right/blue) = show full Name, inactive (left) = show Self
@@ -1777,9 +1857,17 @@ function createEmptyFlight(){
 }
 
 async function handleFiles(f){
-    for(let x of f)if(!files.find(y=>y.name===x.name))files.push(x);
+    for(let x of f){
+        if(!files.find(y=>y.name===x.name)){
+            files.push(x);
+            fileUploads.push({file:x,employer:employer.value,sourceIdx:fileUploads.length});
+        }
+    }
     renderFileList();rawFlights=[];pilotCounts={};
-    for(let file of files){const c=await readFile(file);parseAirCanadaPQRM(c)}
+    for(let i=0;i<files.length;i++){
+        const c=await readFile(files[i]);
+        parseAirCanadaPQRM(c,i);
+    }
     let maxCount=0;detectedPilot='';
     for(let name in pilotCounts)if(pilotCounts[name]>maxCount){maxCount=pilotCounts[name];detectedPilot=name}
     if(detectedPilot){pilotDetection.classList.add('visible');pilotNameInput.value=detectedPilot;detectedInfo.textContent=`${maxCount}/${rawFlights.length} flights`}
@@ -1787,15 +1875,38 @@ async function handleFiles(f){
     if(files.length)uploadZone.classList.add('has-file');
 }
 function renderFileList(){
-    fileList.innerHTML=files.map((f,i)=>`<div class="file-item"><span><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${f.name}</span><button data-idx="${i}"><svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`).join('');
-    fileList.querySelectorAll('button').forEach(btn=>btn.onclick=e=>{
-        files.splice(parseInt(e.target.dataset.idx),1);renderFileList();
+    fileList.innerHTML=files.map((f,i)=>{
+        const fu=fileUploads[i];
+        let html=`<div class="file-item"><div class="file-item-employer"><span><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${f.name}</span>`;
+        if(perUploadMode&&fu){
+            html+=`<input type="text" list="employerList" data-file-idx="${i}" class="file-employer-input" value="${fu.employer||''}" placeholder="Employer...">`;
+        }
+        html+=`</div><button data-idx="${i}"><svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`;
+        return html;
+    }).join('');
+    fileList.querySelectorAll('button[data-idx]').forEach(btn=>btn.onclick=e=>{
+        const idx=parseInt(btn.dataset.idx);
+        files.splice(idx,1);
+        fileUploads.splice(idx,1);
+        // Update sourceIdx for remaining uploads
+        fileUploads.forEach((fu,i)=>fu.sourceIdx=i);
+        renderFileList();
         processBtn.disabled=!files.length;
         if(!files.length){uploadZone.classList.remove('has-file');pilotDetection.classList.remove('visible');rawFlights=[]}
     });
+    fileList.querySelectorAll('.file-employer-input').forEach(inp=>{
+        inp.onchange=e=>{
+            const idx=parseInt(inp.dataset.fileIdx);
+            if(fileUploads[idx])fileUploads[idx].employer=inp.value;
+        };
+        inp.oninput=e=>{
+            const idx=parseInt(inp.dataset.fileIdx);
+            if(fileUploads[idx])fileUploads[idx].employer=inp.value;
+        };
+    });
 }
 function readFile(f){return new Promise(r=>{const x=new FileReader();x.onload=e=>r(e.target.result);x.readAsText(f)})}
-function parseAirCanadaPQRM(c){
+function parseAirCanadaPQRM(c,sourceFileIdx=0){
     const lines=c.split(/\r?\n/);let hdr=-1;
     for(let i=0;i<Math.min(10,lines.length);i++)if(lines[i].includes('Date')&&lines[i].includes('Type')){hdr=i;break}
     if(hdr===-1)return;
@@ -1807,13 +1918,22 @@ function parseAirCanadaPQRM(c){
         if(pic)pilotCounts[pic]=(pilotCounts[pic]||0)+1;
         if(sic)pilotCounts[sic]=(pilotCounts[sic]||0)+1;
         if(crew)pilotCounts[crew]=(pilotCounts[crew]||0)+1;
-        rawFlights.push({dateStr:ds,type,reg:(col[2]||'').trim(),fin:(col[3]||'').trim(),fltNum:(col[4]||'').trim(),picNameRaw:pic,sicNameRaw:sic,otherCrew:crew,from:(col[8]||'').trim(),to:(col[10]||'').trim(),ifrTime:(col[12]||'').trim(),dayTime:(col[14]||'').trim(),nightTime:(col[15]||'').trim(),takeoffFlag:(col[20]||'').trim().toUpperCase(),landingFlag:(col[21]||'').trim().toUpperCase(),rightSeatFlag:(col[22]||'').trim().toUpperCase(),etopsFlag:(col[23]||'').trim().toUpperCase()});
+        rawFlights.push({dateStr:ds,type,reg:(col[2]||'').trim(),fin:(col[3]||'').trim(),fltNum:(col[4]||'').trim(),picNameRaw:pic,sicNameRaw:sic,otherCrew:crew,from:(col[8]||'').trim(),to:(col[10]||'').trim(),ifrTime:(col[12]||'').trim(),dayTime:(col[14]||'').trim(),nightTime:(col[15]||'').trim(),takeoffFlag:(col[20]||'').trim().toUpperCase(),landingFlag:(col[21]||'').trim().toUpperCase(),rightSeatFlag:(col[22]||'').trim().toUpperCase(),etopsFlag:(col[23]||'').trim().toUpperCase(),sourceFileIdx});
     }
 }
+// Helper to detect Jazz aircraft from fin pattern
+function isJazzAircraft(fin){
+    if(!fin)return false;
+    const f=fin.trim().toUpperCase();
+    // Jazz fins: J701-J721 (CRJ-900), J401-J498 (Q400), E01-E09 (E175)
+    return /^J[47]\d{2}$/.test(f)||/^E0\d$/.test(f);
+}
+
 function processAllFiles(){
     myName=pilotNameInput.value.trim();
     if(!myName){showStatus('Enter pilot name.','error');return}
     flights=[];
+    let jazzAutoCount=0;
     rawFlights.forEach(rf=>{
         const dt=convDate(rf.dateStr);
         // Determine role: PIC > SIC > RP (in Other Crew) > Assumed RP (not listed)
@@ -1839,6 +1959,17 @@ function processAllFiles(){
         const model=getModelForOutput({_variantInfo:variantInfo});
         const unmapped=variantInfo.source==='fallback';
 
+        // Determine employer: Jazz auto-detect > per-upload mode > global setting
+        let flightEmployer=employer.value;
+        let jazzAutoDetected=false;
+        if(isJazzAircraft(rf.fin)){
+            flightEmployer='Jazz Aviation';
+            jazzAutoDetected=true;
+            jazzAutoCount++;
+        }else if(perUploadMode&&fileUploads[rf.sourceFileIdx]){
+            flightEmployer=fileUploads[rf.sourceFileIdx].employer;
+        }
+
         const f={
             sortDate:dt,Date:dt,flightNumber:cleanFlt(rf.fltNum),From:rf.from,To:rf.to,
             'Tail Number':fmtTail(rf.reg),Model:model,modelUnmapped:unmapped,
@@ -1849,7 +1980,9 @@ function processAllFiles(){
             variantSource:variantInfo.source,
             variantConflict:variantInfo.conflict,
             originalTypeCode:rf.type,
-            'Nose Number':extNose(rf.fin),'Employer Name':employer.value,
+            'Nose Number':extNose(rf.fin),'Employer Name':flightEmployer,
+            jazzAutoDetected:jazzAutoDetected,
+            sourceFileIdx:rf.sourceFileIdx,
             totalMinutes:totalMins,dayMinutes:dayMins,nightMinutes:nightMins,
             'Total Flight Time':minutesToDisplay(totalMins),
             'Day Flight':minutesToDisplay(dayMins),'Night':minutesToDisplay(nightMins),
@@ -1874,6 +2007,7 @@ function processAllFiles(){
     detectDups();validateAllTimes();
     const hasAssumedRP=flights.some(f=>f.assumedRP);
     let msg=`Loaded ${flights.length} flights.`;
+    if(jazzAutoCount>0)msg+=` ${jazzAutoCount} Jazz flight(s) auto-detected.`;
     if(hasAssumedRP)msg+=` ${flights.filter(f=>f.assumedRP).length} flight(s) marked as assumed RP - please verify.`;
     showStatus(msg,flights.some(f=>f.isDup||f.hasTimeError||f.assumedRP)?'warning':'success');
     setTimeout(()=>{goToStep(2);renderTable()},300);
@@ -2032,6 +2166,10 @@ function renderCell(f,c,i,isSelected){
         displayVal=getModelForOutput(f)||v||'';
         if(f.variantConflict)extra+='<span class="badge conflict-badge" title="Identifiers resolved to different variants">!</span>';
         if(f.variantSource==='fallback')extra+='<span class="badge unmapped-badge" title="No catalog match">?</span>';
+    }
+    // Show Jazz auto-detected badge for employer column
+    if(c.k==='Employer Name'&&f.jazzAutoDetected){
+        extra+='<span class="jazz-badge" title="Auto-detected from aircraft fin">Auto</span>';
     }
     const optAttr=c.isOpt?'data-opt="1"':'data-opt="0"';
     return `<td class="${cls}${selClass}"><span class="editable" data-i="${i}" data-k="${c.k}" data-t="${c.t}" ${optAttr}>${displayVal||'&nbsp;'}</span>${extra}</td>`;
@@ -2255,6 +2393,85 @@ function generatePreview(){
         return `<td style="${s}">${v}</td>`;
     }).join('')+'</tr>').join('');
     previewCount.textContent=csvData.length;goToStep(3);
+    // Render export charts after a brief delay for DOM update
+    setTimeout(renderExportCharts,100);
+}
+
+function renderExportCharts(){
+    // Summary stats for export page
+    const totalMins=flights.reduce((sum,f)=>sum+(f.totalMinutes||0),0);
+    const picMins=flights.filter(f=>f.role==='PIC').reduce((sum,f)=>sum+(f.totalMinutes||0),0);
+    const sicMins=flights.filter(f=>f.role==='SIC').reduce((sum,f)=>sum+(f.totalMinutes||0),0);
+    const rpMins=flights.filter(f=>f.role==='RP').reduce((sum,f)=>sum+(f.totalMinutes||0),0);
+
+    $('exportSummaryStats').innerHTML=`
+        <div class="summary-stat"><div class="summary-stat-value">${flights.length}</div><div class="summary-stat-label">Flights</div></div>
+        <div class="summary-stat"><div class="summary-stat-value">${minutesToHours(totalMins)}</div><div class="summary-stat-label">Total Hours</div></div>
+        <div class="summary-stat"><div class="summary-stat-value">${minutesToHours(picMins)}</div><div class="summary-stat-label">PIC Hours</div></div>
+        <div class="summary-stat"><div class="summary-stat-value">${minutesToHours(sicMins)}</div><div class="summary-stat-label">SIC Hours</div></div>
+        ${rpMins>0?`<div class="summary-stat"><div class="summary-stat-value">${minutesToHours(rpMins)}</div><div class="summary-stat-label">RP Hours</div></div>`:''}
+    `;
+
+    // Destroy existing charts
+    if(exportAircraftChart){exportAircraftChart.destroy();exportAircraftChart=null}
+    if(exportRoleChart){exportRoleChart.destroy();exportRoleChart=null}
+    if(exportEmployerChart){exportEmployerChart.destroy();exportEmployerChart=null}
+
+    const computedStyle=getComputedStyle(document.documentElement);
+    const textColor=computedStyle.getPropertyValue('--text').trim()||'#f1f5f9';
+
+    const chartOptions={
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+            legend:{
+                display:true,
+                position:'bottom',
+                labels:{color:textColor,boxWidth:12,padding:8,font:{size:11}}
+            },
+            tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${minutesToHours(ctx.raw)} hrs`}}
+        }
+    };
+
+    // Aircraft chart
+    const acData=getHoursByAircraftFamily();
+    const acLabels=Object.keys(acData).sort((a,b)=>acData[b]-acData[a]);
+    const acValues=acLabels.map(l=>acData[l]);
+    if(acLabels.length>0){
+        exportAircraftChart=new Chart($('exportAircraftChart'),{
+            type:'doughnut',
+            data:{labels:acLabels,datasets:[{data:acValues,backgroundColor:CHART_COLORS.slice(0,acLabels.length),borderWidth:0}]},
+            options:chartOptions
+        });
+    }
+
+    // Role chart
+    const roleData=getHoursByRole();
+    const roleLabels=Object.keys(roleData).filter(k=>roleData[k]>0);
+    const roleValues=roleLabels.map(l=>roleData[l]);
+    const roleColors={'PIC':'#22c55e','SIC':'#3b82f6','RP':'#f97316'};
+    if(roleLabels.length>0){
+        exportRoleChart=new Chart($('exportRoleChart'),{
+            type:'doughnut',
+            data:{labels:roleLabels,datasets:[{data:roleValues,backgroundColor:roleLabels.map(l=>roleColors[l]||'#64748b'),borderWidth:0}]},
+            options:chartOptions
+        });
+    }
+
+    // Employer chart (only if multiple employers)
+    const empData=getHoursByEmployer();
+    const empLabels=Object.keys(empData);
+    if(empLabels.length>1){
+        $('exportEmployerChartContainer').style.display='block';
+        const empValues=empLabels.map(l=>empData[l]);
+        exportEmployerChart=new Chart($('exportEmployerChart'),{
+            type:'doughnut',
+            data:{labels:empLabels,datasets:[{data:empValues,backgroundColor:CHART_COLORS.slice(0,empLabels.length),borderWidth:0}]},
+            options:chartOptions
+        });
+    }else{
+        $('exportEmployerChartContainer').style.display='none';
+    }
 }
 
 function downloadCSV(){
@@ -2294,6 +2511,167 @@ function showStatus(m,t){
     statusMsg.innerHTML=`<div class="status status-${t}">${icons[t]||''}${m}</div>`;
     if(t==='success')setTimeout(()=>statusMsg.innerHTML='',3000)
 }
+
+// ==================== SUMMARY CHARTS ====================
+const CHART_COLORS=['#3b82f6','#22c55e','#f97316','#a855f7','#06b6d4','#eab308','#ef4444','#ec4899','#14b8a6','#8b5cf6'];
+
+function getHoursByAircraftFamily(){
+    const totals={};
+    flights.forEach(f=>{
+        const family=f.family||f.Model||'Unknown';
+        totals[family]=(totals[family]||0)+(f.totalMinutes||0);
+    });
+    return totals;
+}
+
+function getHoursByRole(){
+    const totals={PIC:0,SIC:0,RP:0};
+    flights.forEach(f=>{
+        const mins=f.totalMinutes||0;
+        if(f.role==='PIC')totals.PIC+=mins;
+        else if(f.role==='SIC')totals.SIC+=mins;
+        else totals.RP+=mins;
+    });
+    return totals;
+}
+
+function getHoursByEmployer(){
+    const totals={};
+    flights.forEach(f=>{
+        const emp=f['Employer Name']||'Unknown';
+        totals[emp]=(totals[emp]||0)+(f.totalMinutes||0);
+    });
+    return totals;
+}
+
+function minutesToHours(mins){
+    return Math.round(mins/6)/10; // Round to 1 decimal
+}
+
+function formatHoursLabel(mins){
+    const h=Math.floor(mins/60);
+    const m=mins%60;
+    return h>0?`${h}h ${m}m`:`${m}m`;
+}
+
+function renderSummaryCharts(){
+    // Summary stats
+    const totalMins=flights.reduce((sum,f)=>sum+(f.totalMinutes||0),0);
+    const totalFlights=flights.length;
+    const uniqueAircraft=new Set(flights.map(f=>f['Tail Number'])).size;
+
+    $('summaryStats').innerHTML=`
+        <div class="summary-stat"><div class="summary-stat-value">${totalFlights}</div><div class="summary-stat-label">Flights</div></div>
+        <div class="summary-stat"><div class="summary-stat-value">${minutesToHours(totalMins)}</div><div class="summary-stat-label">Total Hours</div></div>
+        <div class="summary-stat"><div class="summary-stat-value">${uniqueAircraft}</div><div class="summary-stat-label">Aircraft</div></div>
+    `;
+
+    // Destroy existing charts
+    if(aircraftChartInstance){aircraftChartInstance.destroy();aircraftChartInstance=null}
+    if(roleChartInstance){roleChartInstance.destroy();roleChartInstance=null}
+    if(employerChartInstance){employerChartInstance.destroy();employerChartInstance=null}
+
+    // Get computed colors from CSS variables for theme compatibility
+    const computedStyle=getComputedStyle(document.documentElement);
+    const textColor=computedStyle.getPropertyValue('--text').trim()||'#f1f5f9';
+
+    const chartOptions={
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+            legend:{
+                display:true,
+                position:'bottom',
+                labels:{
+                    color:textColor,
+                    boxWidth:12,
+                    padding:8,
+                    font:{size:11}
+                }
+            },
+            tooltip:{
+                callbacks:{
+                    label:ctx=>`${ctx.label}: ${minutesToHours(ctx.raw)} hrs`
+                }
+            }
+        }
+    };
+
+    // Aircraft chart
+    const acData=getHoursByAircraftFamily();
+    const acLabels=Object.keys(acData).sort((a,b)=>acData[b]-acData[a]);
+    const acValues=acLabels.map(l=>acData[l]);
+    if(acLabels.length>0){
+        aircraftChartInstance=new Chart($('aircraftChart'),{
+            type:'doughnut',
+            data:{
+                labels:acLabels,
+                datasets:[{
+                    data:acValues,
+                    backgroundColor:CHART_COLORS.slice(0,acLabels.length),
+                    borderWidth:0
+                }]
+            },
+            options:chartOptions
+        });
+    }
+
+    // Role chart
+    const roleData=getHoursByRole();
+    const roleLabels=Object.keys(roleData).filter(k=>roleData[k]>0);
+    const roleValues=roleLabels.map(l=>roleData[l]);
+    const roleColors={'PIC':'#22c55e','SIC':'#3b82f6','RP':'#f97316'};
+    if(roleLabels.length>0){
+        roleChartInstance=new Chart($('roleChart'),{
+            type:'doughnut',
+            data:{
+                labels:roleLabels,
+                datasets:[{
+                    data:roleValues,
+                    backgroundColor:roleLabels.map(l=>roleColors[l]||'#64748b'),
+                    borderWidth:0
+                }]
+            },
+            options:chartOptions
+        });
+    }
+
+    // Employer chart (only show if multiple employers)
+    const empData=getHoursByEmployer();
+    const empLabels=Object.keys(empData);
+    if(empLabels.length>1){
+        $('employerChartContainer').style.display='block';
+        const empValues=empLabels.map(l=>empData[l]);
+        employerChartInstance=new Chart($('employerChart'),{
+            type:'doughnut',
+            data:{
+                labels:empLabels,
+                datasets:[{
+                    data:empValues,
+                    backgroundColor:CHART_COLORS.slice(0,empLabels.length),
+                    borderWidth:0
+                }]
+            },
+            options:chartOptions
+        });
+    }else{
+        $('employerChartContainer').style.display='none';
+    }
+}
+
+function openSummaryModal(){
+    if(!flights.length){showStatus('No flights to summarize.','warning');return}
+    renderSummaryCharts();
+    $('summaryModal').style.display='flex';
+}
+
+function closeSummaryModal(){
+    $('summaryModal').style.display='none';
+}
+
+$('summaryBtn').addEventListener('click',openSummaryModal);
+$('closeSummaryBtn').addEventListener('click',closeSummaryModal);
+$('summaryModal').addEventListener('click',e=>{if(e.target===$('summaryModal'))closeSummaryModal()});
 </script>
 </body>
 </html>
