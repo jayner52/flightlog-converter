@@ -300,7 +300,8 @@
         .per-upload-toggle{margin-top:.5rem;display:flex;align-items:center;gap:.5rem}
         .per-upload-toggle label{font-size:.75rem;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:.35rem}
         .per-upload-toggle input{width:14px;height:14px;accent-color:var(--primary)}
-        .file-item-employer{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+        .file-item-employer{display:flex;align-items:center;gap:.5rem;flex-wrap:nowrap;overflow:hidden}
+        .file-item-employer>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:0}
         .file-item-employer input.file-employer-input{padding:.25rem .4rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.7rem;min-width:140px;max-width:160px}
         .file-item-employer input.file-employer-input:focus{border-color:var(--primary);outline:none}
         .apply-all-employer{display:flex;align-items:center;gap:.5rem;margin-top:.5rem;padding:.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px}
@@ -1916,16 +1917,17 @@ async function handleFiles(f){
         if(detected){
             fileUploads[idx].employer=detected;
             fileUploads[idx].autoDetected=true;
-            fileUploads[idx].needsInput=false;
         }else{
-            // Couldn't detect - mark as needing input
-            fileUploads[idx].needsInput=true;
+            // Couldn't detect - keep default employer, don't mark as auto-detected
             fileUploads[idx].autoDetected=false;
         }
+        // Only mark as needing input if employer is actually empty
+        fileUploads[idx].needsInput=!fileUploads[idx].employer;
     });
     // Check if different employers were detected - auto-enable per-upload mode
     const detectedEmployers=new Set(fileUploads.filter(fu=>fu.autoDetected).map(fu=>fu.employer));
-    if(detectedEmployers.size>1||fileUploads.some(fu=>fu.needsInput)){
+    const hasEmptyEmployer=fileUploads.some(fu=>!fu.employer);
+    if(detectedEmployers.size>1||hasEmptyEmployer){
         perUploadMode=true;
         $('perUploadCheck').checked=true;
     }
@@ -1937,10 +1939,11 @@ async function handleFiles(f){
     if(files.length)uploadZone.classList.add('has-file');
     // Show appropriate message
     const autoCount=newFileIndices.filter(i=>fileUploads[i].autoDetected).length;
-    const needsCount=newFileIndices.filter(i=>fileUploads[i].needsInput).length;
-    if(needsCount>0&&autoCount>0)showStatus(`Auto-detected ${autoCount} file(s). ${needsCount} file(s) need employer - please fill in below.`,'warning');
-    else if(needsCount>0)showStatus(`Could not detect employer for ${needsCount} file(s). Please fill in below.`,'warning');
-    else if(autoCount>0)showStatus(`Auto-detected employer for ${autoCount} file(s) from aircraft data.`,'success');
+    const undetectedCount=newFileIndices.filter(i=>!fileUploads[i].autoDetected).length;
+    const emptyCount=newFileIndices.filter(i=>!fileUploads[i].employer).length;
+    if(emptyCount>0)showStatus(`${emptyCount} file(s) need an employer. Please fill in above.`,'warning');
+    else if(autoCount>0&&undetectedCount>0)showStatus(`Auto-detected employers for ${autoCount} file(s). Please verify above.`,'success');
+    else if(autoCount>0)showStatus(`Auto-detected employers from aircraft data. Please verify above.`,'success');
 }
 function renderFileList(){
     // Only show per-upload toggle if multiple files
