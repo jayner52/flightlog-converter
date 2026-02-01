@@ -307,6 +307,7 @@
         .apply-all-employer input{flex:1;padding:.35rem .5rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.75rem;min-width:120px}
         .apply-all-employer input:focus{border-color:var(--primary);outline:none}
         .jazz-badge{font-size:.55rem;padding:.1rem .25rem;background:rgba(139,92,246,.15);border:1px solid var(--purple);color:var(--purple);border-radius:3px;margin-left:.25rem}
+        .auto-badge{font-size:.55rem;padding:.1rem .25rem;background:rgba(34,197,94,.15);border:1px solid var(--green);color:var(--green);border-radius:3px;margin-left:.25rem;cursor:help}
         /* Summary modal styles */
         .summary-modal{max-width:800px;max-height:90vh}
         .summary-content{padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.25rem;overflow-y:auto;max-height:calc(90vh - 80px)}
@@ -1870,23 +1871,59 @@ function createEmptyFlight(){
     return f;
 }
 
+// Detect employer from FIN prefix pattern
+function detectEmployerFromFins(fins){
+    if(!fins||!fins.length)return null;
+    let rvCount=0,acCount=0,jazzCount=0;
+    fins.forEach(fin=>{
+        const f=(fin||'').trim().toUpperCase();
+        if(/^RV\d/.test(f))rvCount++;
+        else if(/^AC\d/.test(f))acCount++;
+        else if(/^J[47]\d{2}$/.test(f)||/^E0\d$/.test(f))jazzCount++;
+    });
+    // Return employer if majority of FINs match a pattern
+    const total=fins.length;
+    if(jazzCount>total*0.5)return 'Jazz Aviation';
+    if(rvCount>total*0.5)return 'Air Canada Rouge';
+    if(acCount>total*0.5)return 'Air Canada Mainline';
+    return null;
+}
+
 async function handleFiles(f){
+    const newFileIndices=[];
     for(let x of f){
         if(!files.find(y=>y.name===x.name)){
             files.push(x);
-            fileUploads.push({file:x,employer:employer.value,sourceIdx:fileUploads.length});
+            const idx=fileUploads.length;
+            fileUploads.push({file:x,employer:employer.value,sourceIdx:idx,autoDetected:false});
+            newFileIndices.push(idx);
         }
     }
     renderFileList();rawFlights=[];pilotCounts={};
+    // Track FINs per file for employer detection
+    const finsPerFile={};
     for(let i=0;i<files.length;i++){
+        finsPerFile[i]=[];
         const c=await readFile(files[i]);
-        parseAirCanadaPQRM(c,i);
+        parseAirCanadaPQRM(c,i,finsPerFile[i]);
     }
+    // Auto-detect employer for newly added files
+    newFileIndices.forEach(idx=>{
+        const detected=detectEmployerFromFins(finsPerFile[idx]);
+        if(detected){
+            fileUploads[idx].employer=detected;
+            fileUploads[idx].autoDetected=true;
+        }
+    });
+    renderFileList();// Re-render with detected employers
     let maxCount=0;detectedPilot='';
     for(let name in pilotCounts)if(pilotCounts[name]>maxCount){maxCount=pilotCounts[name];detectedPilot=name}
     if(detectedPilot){pilotDetection.classList.add('visible');pilotNameInput.value=detectedPilot;detectedInfo.textContent=`${maxCount}/${rawFlights.length} flights`}
     processBtn.disabled=!files.length;
     if(files.length)uploadZone.classList.add('has-file');
+    // Show message if employers were auto-detected
+    const autoCount=newFileIndices.filter(i=>fileUploads[i].autoDetected).length;
+    if(autoCount>0)showStatus(`Auto-detected employer for ${autoCount} file(s) from aircraft data. You can change this below.`,'success');
 }
 function renderFileList(){
     // Only show per-upload toggle if multiple files
@@ -1895,11 +1932,16 @@ function renderFileList(){
     // Show apply-all section when per-upload mode is enabled
     $('applyAllEmployer').style.display=(perUploadMode&&files.length>1)?'flex':'none';
 
+    // Check if any files have auto-detected employers
+    const hasAutoDetected=fileUploads.some(fu=>fu.autoDetected);
+
     fileList.innerHTML=files.map((f,i)=>{
         const fu=fileUploads[i];
         let html=`<div class="file-item"><div class="file-item-employer"><span><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${f.name}</span>`;
-        if(perUploadMode&&fu){
-            html+=`<input type="text" list="employerList" data-file-idx="${i}" class="file-employer-input" value="${fu.employer||''}" placeholder="Employer...">`;
+        // Always show employer input when auto-detected or in per-upload mode
+        if((fu&&fu.autoDetected)||perUploadMode){
+            const autoBadge=fu.autoDetected?'<span class="auto-badge" title="Detected from aircraft data - click to change">Auto</span>':'';
+            html+=`<input type="text" list="employerList" data-file-idx="${i}" class="file-employer-input" value="${fu.employer||''}" placeholder="Employer...">${autoBadge}`;
         }
         html+=`</div><button data-idx="${i}"><svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`;
         return html;
@@ -1917,7 +1959,14 @@ function renderFileList(){
     fileList.querySelectorAll('.file-employer-input').forEach(inp=>{
         inp.onchange=e=>{
             const idx=parseInt(inp.dataset.fileIdx);
-            if(fileUploads[idx])fileUploads[idx].employer=inp.value;
+            if(fileUploads[idx]){
+                fileUploads[idx].employer=inp.value;
+                // Clear auto-detected flag when user manually changes
+                if(fileUploads[idx].autoDetected){
+                    fileUploads[idx].autoDetected=false;
+                    renderFileList();// Re-render to remove Auto badge
+                }
+            }
         };
         inp.oninput=e=>{
             const idx=parseInt(inp.dataset.fileIdx);
@@ -1926,7 +1975,7 @@ function renderFileList(){
     });
 }
 function readFile(f){return new Promise(r=>{const x=new FileReader();x.onload=e=>r(e.target.result);x.readAsText(f)})}
-function parseAirCanadaPQRM(c,sourceFileIdx=0){
+function parseAirCanadaPQRM(c,sourceFileIdx=0,finsArray=null){
     const lines=c.split(/\r?\n/);let hdr=-1;
     for(let i=0;i<Math.min(10,lines.length);i++)if(lines[i].includes('Date')&&lines[i].includes('Type')){hdr=i;break}
     if(hdr===-1)return;
@@ -1934,11 +1983,12 @@ function parseAirCanadaPQRM(c,sourceFileIdx=0){
         const ln=lines[i];if(!ln.trim())continue;
         const col=ln.split('\t');if(col.length<12)continue;
         const ds=col[0].trim();if(!ds||ds.toLowerCase().includes('total')||!/^[A-Za-z]{3}\s+\d{1,2}\s+\d{4}/.test(ds))continue;
-        const pic=(col[5]||'').trim(),sic=(col[6]||'').trim(),crew=(col[7]||'').trim(),type=(col[1]||'').trim();
+        const pic=(col[5]||'').trim(),sic=(col[6]||'').trim(),crew=(col[7]||'').trim(),type=(col[1]||'').trim(),fin=(col[3]||'').trim();
         if(pic)pilotCounts[pic]=(pilotCounts[pic]||0)+1;
         if(sic)pilotCounts[sic]=(pilotCounts[sic]||0)+1;
         if(crew)pilotCounts[crew]=(pilotCounts[crew]||0)+1;
-        rawFlights.push({dateStr:ds,type,reg:(col[2]||'').trim(),fin:(col[3]||'').trim(),fltNum:(col[4]||'').trim(),picNameRaw:pic,sicNameRaw:sic,otherCrew:crew,from:(col[8]||'').trim(),to:(col[10]||'').trim(),ifrTime:(col[12]||'').trim(),dayTime:(col[14]||'').trim(),nightTime:(col[15]||'').trim(),takeoffFlag:(col[20]||'').trim().toUpperCase(),landingFlag:(col[21]||'').trim().toUpperCase(),rightSeatFlag:(col[22]||'').trim().toUpperCase(),etopsFlag:(col[23]||'').trim().toUpperCase(),sourceFileIdx});
+        if(finsArray&&fin)finsArray.push(fin);
+        rawFlights.push({dateStr:ds,type,reg:(col[2]||'').trim(),fin,fltNum:(col[4]||'').trim(),picNameRaw:pic,sicNameRaw:sic,otherCrew:crew,from:(col[8]||'').trim(),to:(col[10]||'').trim(),ifrTime:(col[12]||'').trim(),dayTime:(col[14]||'').trim(),nightTime:(col[15]||'').trim(),takeoffFlag:(col[20]||'').trim().toUpperCase(),landingFlag:(col[21]||'').trim().toUpperCase(),rightSeatFlag:(col[22]||'').trim().toUpperCase(),etopsFlag:(col[23]||'').trim().toUpperCase(),sourceFileIdx});
     }
 }
 // Helper to detect Jazz aircraft from fin pattern
