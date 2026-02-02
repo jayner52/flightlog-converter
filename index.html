@@ -171,7 +171,14 @@
         .info-badge{background:rgba(6,182,212,.12);border:1px solid var(--cyan);color:var(--cyan)}
         .unmapped-badge{background:rgba(139,92,246,.12);border:1px solid var(--purple);color:var(--purple);font-size:.5rem}
         .conflict-badge{background:rgba(249,115,22,.15);border:1px solid var(--orange);color:var(--orange);font-size:.5rem}
-        .rp-badge{background:rgba(234,179,8,.15);border:1px solid var(--yellow);color:var(--yellow)}
+        .rp-badge{background:rgba(234,179,8,.15);border:1px solid var(--yellow);color:var(--yellow);cursor:pointer;transition:all .15s}
+        .rp-badge:hover{background:rgba(234,179,8,.25)}
+        .rp-popup{position:absolute;left:0;top:100%;margin-top:4px;background:var(--bg);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:100;min-width:120px;overflow:hidden}
+        .rp-popup button{display:block;width:100%;padding:.5rem .75rem;background:none;border:none;text-align:left;color:var(--text);font-size:.75rem;cursor:pointer;transition:background .1s}
+        .rp-popup button:hover{background:var(--hover)}
+        .rp-popup button.rp-confirm{color:var(--green)}
+        .rp-popup button.rp-pic{color:var(--blue)}
+        .rp-popup button.rp-sic{color:var(--purple)}
         .assumed-rp{background:rgba(234,179,8,.05)}
         .stats-row{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)}
         .stat-box{background:var(--bg2);padding:.35rem .5rem;border-radius:5px;min-width:50px;border:1px solid var(--border)}
@@ -1756,13 +1763,22 @@ document.addEventListener('keydown',e=>{
 });
 
 flightsBody.addEventListener('click',e=>{
+    // Handle RP badge clicks
+    const rpBadge=e.target.closest('.rp-badge');
+    if(rpBadge){
+        e.stopPropagation();
+        const idx=parseInt(rpBadge.dataset.rpIdx);
+        showRpPopup(rpBadge,idx);
+        return;
+    }
+
     const td=e.target.closest('td');
     if(!td||td.classList.contains('sticky-col'))return;
     const tr=td.closest('tr');if(!tr)return;
     const rowIdx=[...flightsBody.children].indexOf(tr);
     const colIdx=[...tr.children].indexOf(td)-1;
     if(rowIdx>=0&&colIdx>=0)selectCell(rowIdx,colIdx);
-    
+
     const ed=e.target.closest('.editable');
     if(ed){const cols=getVisibleCols();activateCell(rowIdx,cols[colIdx])}
     const del=e.target.closest('.delete-btn');
@@ -1774,6 +1790,52 @@ flightsBody.addEventListener('click',e=>{
         flights[i].assumedRP=false; // User confirmed the role
         updatePilotNames(flights[i]);
         renderTable();
+    }
+});
+
+// RP badge popup handling
+let activeRpPopup=null;
+function showRpPopup(badge,idx){
+    closeRpPopup();
+    const popup=document.createElement('div');
+    popup.className='rp-popup';
+    popup.innerHTML=`
+        <button class="rp-confirm" data-action="confirm">✓ Confirm RP</button>
+        <button class="rp-pic" data-action="pic">Change to PIC</button>
+        <button class="rp-sic" data-action="sic">Change to SIC</button>
+    `;
+    popup.onclick=e=>{
+        const btn=e.target.closest('button');
+        if(!btn)return;
+        const action=btn.dataset.action;
+        if(action==='confirm'){
+            flights[idx].assumedRP=false;// Confirm as RP
+        }else if(action==='pic'){
+            flights[idx].role='PIC';
+            flights[idx].assumedRP=false;
+            updatePilotNames(flights[idx]);
+        }else if(action==='sic'){
+            flights[idx].role='SIC';
+            flights[idx].assumedRP=false;
+            updatePilotNames(flights[idx]);
+        }
+        closeRpPopup();
+        renderTable();
+    };
+    // Position relative to badge
+    badge.style.position='relative';
+    badge.appendChild(popup);
+    activeRpPopup={popup,badge};
+}
+function closeRpPopup(){
+    if(activeRpPopup){
+        activeRpPopup.popup.remove();
+        activeRpPopup=null;
+    }
+}
+document.addEventListener('click',e=>{
+    if(activeRpPopup&&!e.target.closest('.rp-badge')&&!e.target.closest('.rp-popup')){
+        closeRpPopup();
     }
 });
 flightsBody.addEventListener('change',e=>{
@@ -2258,7 +2320,7 @@ function renderTable(){
         if(f.hasTimeError)b+='<span class="badge err-badge">ERR</span>';
         else if(f.hasRoundingNotice)b+='<span class="badge info-badge">~</span>';
         else if(f.isDup)b+='<span class="badge dup-badge">DUP</span>';
-        else if(f.assumedRP)b+='<span class="badge rp-badge" title="Not listed as PIC/SIC/Other Crew - assumed Relief Pilot">RP?</span>';
+        else if(f.assumedRP)b+=`<span class="badge rp-badge" data-rp-idx="${i}" title="Click to confirm or change role">RP?</span>`;
         b+=`${i+1}</td>`;
         cols.forEach((c,ci)=>{
             const isSelected=selectedCell.row===i&&selectedCell.col===ci;
