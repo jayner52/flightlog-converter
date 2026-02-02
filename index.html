@@ -184,9 +184,7 @@
         .conflict-badge{background:rgba(249,115,22,.15);border:1px solid var(--orange);color:var(--orange);font-size:.5rem}
         .rp-badge{background:rgba(251,191,36,.15);border:1px solid var(--yellow);color:var(--yellow);cursor:pointer;transition:all .2s ease;border-radius:4px}
         .rp-badge:hover{background:rgba(251,191,36,.25)}
-        .rp-popup{position:absolute;left:0;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:100;min-width:130px;overflow:hidden}
-        .rp-popup.above{bottom:100%;margin-bottom:4px}
-        .rp-popup.below{top:100%;margin-top:4px}
+        .rp-popup{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:1000;min-width:130px;overflow:hidden}
         .rp-popup button{display:block;width:100%;padding:.5rem .75rem;background:none;border:none;text-align:left;color:var(--text);font-size:.75rem;cursor:pointer;transition:background .1s}
         .rp-popup button:hover{background:var(--hover)}
         .rp-popup button.rp-confirm{color:var(--green)}
@@ -1848,23 +1846,24 @@ function showRpPopup(badge,idx){
         closeRpPopup();
         renderTable();
     };
-    // Position relative to badge
-    badge.style.position='relative';
-    badge.appendChild(popup);
+    // Position fixed relative to viewport, appended to body to escape table stacking context
+    document.body.appendChild(popup);
 
-    // Check if popup would be cut off at top - if so, show below instead
     const badgeRect=badge.getBoundingClientRect();
-    const popupHeight=popup.offsetHeight||80;// Approx height if not yet rendered
+    const popupHeight=popup.offsetHeight||80;
     const tableScroll=document.getElementById('tableScroll');
     const thead=document.getElementById('flightsHead');
     const scrollRect=tableScroll?tableScroll.getBoundingClientRect():{top:0};
     const headerHeight=thead?thead.offsetHeight:40;
 
-    // If badge is too close to top of scroll container (accounting for sticky header), show popup below
+    // Position popup - show below if too close to top, otherwise above
+    popup.style.left=badgeRect.left+'px';
     if(badgeRect.top - popupHeight - 10 < scrollRect.top + headerHeight){
-        popup.classList.add('below');
+        // Show below the badge
+        popup.style.top=(badgeRect.bottom+4)+'px';
     }else{
-        popup.classList.add('above');
+        // Show above the badge
+        popup.style.top=(badgeRect.top-popupHeight-4)+'px';
     }
 
     activeRpPopup={popup,badge};
