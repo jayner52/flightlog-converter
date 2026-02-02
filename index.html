@@ -1855,11 +1855,13 @@ function showRpPopup(badge,idx){
     // Check if popup would be cut off at top - if so, show below instead
     const badgeRect=badge.getBoundingClientRect();
     const popupHeight=popup.offsetHeight||80;// Approx height if not yet rendered
-    const tableContainer=document.getElementById('tableContainer');
-    const containerRect=tableContainer?tableContainer.getBoundingClientRect():{top:0};
+    const tableScroll=document.getElementById('tableScroll');
+    const thead=document.getElementById('flightsHead');
+    const scrollRect=tableScroll?tableScroll.getBoundingClientRect():{top:0};
+    const headerHeight=thead?thead.offsetHeight:40;
 
-    // If badge is too close to top of container or viewport, show popup below
-    if(badgeRect.top - popupHeight - 10 < Math.max(containerRect.top, 60)){
+    // If badge is too close to top of scroll container (accounting for sticky header), show popup below
+    if(badgeRect.top - popupHeight - 10 < scrollRect.top + headerHeight){
         popup.classList.add('below');
     }else{
         popup.classList.add('above');
