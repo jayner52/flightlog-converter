@@ -233,8 +233,11 @@
         .btn-coffee{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;background:linear-gradient(135deg,#ffdd00 0%,#fbb034 100%);color:#7c4a03;font-weight:600;font-size:.95rem;border-radius:8px;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(251,176,52,.3)}
         .btn-coffee:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(251,176,52,.4)}
         .btn-coffee svg{width:20px;height:20px}
-        .donate-dismiss{display:block;margin:1rem auto 0;background:none;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;padding:.5rem;transition:color .15s}
+        .donate-dismiss{display:block;margin:.75rem auto 0;background:none;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;padding:.5rem;transition:color .15s}
         .donate-dismiss:hover{color:var(--text2)}
+        .donate-links{margin-top:.75rem;font-size:.75rem}
+        .donate-links a{color:var(--primary);text-decoration:none}
+        .donate-links a:hover{text-decoration:underline}
         .start-fresh-info{text-align:center;padding:1.5rem;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(34,197,94,.08));border:1px solid rgba(59,130,246,.2);border-radius:10px;margin-bottom:1rem}
         .fresh-icon{width:48px;height:48px;margin:0 auto .75rem;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center}
         .fresh-icon svg{width:24px;height:24px;stroke:#fff}
@@ -609,8 +612,9 @@
                         <input type="text" id="feedbackAircraft" name="aircraft" placeholder="Registration, fin #, or description...">
                     </div>
                     <div class="feedback-field" id="airlineField" style="display:none">
-                        <label for="feedbackAirline">Airline Name</label>
+                        <label for="feedbackAirline">Airline Name <span style="color:var(--red)">*</span></label>
                         <input type="text" id="feedbackAirline" name="airline" placeholder="e.g. Delta, United, WestJet...">
+                        <p class="field-note" style="margin-top:.35rem;font-size:.7rem;color:var(--yellow);line-height:1.4">To add your airline, we'll need a sample export file from your crew system (like Air Canada's PQRM). Please include your email below so we can contact you.</p>
                     </div>
                     <div class="feedback-field" id="exportField" style="display:none">
                         <label for="feedbackExport">Logbook / Format Name</label>
@@ -640,12 +644,15 @@
                     </div>
                     <h2>Your logbook is ready!</h2>
                     <p class="donate-stats" id="donateStats">You just converted <strong>0 flights</strong> in seconds.</p>
-                    <p class="donate-message">This tool is free and always will be. If it saved you time, consider buying me a coffee to keep it running.</p>
+                    <p class="donate-message">If this tool saved you time, consider buying me a coffee to support development.</p>
                     <a href="https://buymeacoffee.com/jiroberts" target="_blank" class="btn-coffee" id="coffeeBtn">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
                         Buy me a coffee
                     </a>
-                    <button class="donate-dismiss" id="donateDismiss">Maybe next time</button>
+                    <div class="donate-links">
+                        <a href="#" id="donateFeedbackLink">Send feedback</a>
+                    </div>
+                    <button class="donate-dismiss" id="donateDismiss">Close</button>
                 </div>
             </div>
         </div>
@@ -1569,6 +1576,18 @@ function handleFeedbackTypeChange(){
     $('aircraftField').style.display=type==='Missing Aircraft'?'block':'none';
     $('airlineField').style.display=type==='Request Airline Import'?'block':'none';
     $('exportField').style.display=type==='Request Export Format'?'block':'none';
+    // Make airline name required when requesting airline import
+    $('feedbackAirline').required=type==='Request Airline Import';
+    // Make email required for airline import requests
+    const emailField=$('feedbackEmail');
+    const emailLabel=emailField.previousElementSibling;
+    if(type==='Request Airline Import'){
+        emailField.required=true;
+        emailLabel.innerHTML='Email <span style="color:var(--red)">*</span>';
+    }else{
+        emailField.required=false;
+        emailLabel.innerHTML='Email <span style="color:var(--muted);font-weight:400">(optional, for follow-up)</span>';
+    }
 }
 
 async function submitFeedback(e){
@@ -1626,6 +1645,7 @@ function closeDonateModal(){
 
 $('donateDismiss').addEventListener('click',closeDonateModal);
 $('donateModal').addEventListener('click',e=>{if(e.target===$('donateModal'))closeDonateModal()});
+$('donateFeedbackLink').addEventListener('click',e=>{e.preventDefault();closeDonateModal();openFeedbackModal()});
 $('coffeeBtn').addEventListener('click',()=>{
     $('donateStats').innerHTML='<strong>Thank you so much!</strong> You\'re awesome.';
     setTimeout(closeDonateModal,1500);
