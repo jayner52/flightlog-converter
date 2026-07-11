@@ -638,6 +638,7 @@
                             <option value="Request Airline Import">Request Airline Import</option>
                             <option value="Request Export Format">Request Export Format</option>
                             <option value="Feature Request">Feature Request</option>
+                            <option value="Suggest a New Tool">Suggest a New Tool</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -758,7 +759,7 @@
         </div>
         <footer>
             <div style="margin-bottom:.35rem;display:flex;align-items:center;justify-content:center;gap:.4rem"><img src="logo-icon.png" alt="" style="width:18px;height:18px"> Cleared to Log</div>
-            <div style="display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> All data processed locally in your browser &bull; <a href="#" id="feedbackBtn" style="color:var(--muted);text-decoration:none" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted)'">Feedback</a></div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:.4rem"><svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> All data processed locally in your browser &bull; <a href="#" id="suggestToolBtn" style="color:var(--muted);text-decoration:none" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted)'">Got an idea for another tool?</a> &bull; <a href="#" id="feedbackBtn" style="color:var(--muted);text-decoration:none" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted)'">Feedback</a></div>
         </footer>
     </div>
 <script>
@@ -1571,10 +1572,12 @@ function openCatalogModal(){
     $('catalogFamilyFilter').value='';
     renderCatalogTable();
     $('catalogModal').style.display='flex';
+    trapFocus($('catalogModal'),$('catalogBtn'),'Aircraft Catalog');
 }
 
 function closeCatalogModal(){
     $('catalogModal').style.display='none';
+    releaseFocus();
 }
 
 $('catalogBtn').addEventListener('click',openCatalogModal);
@@ -1586,9 +1589,11 @@ $('catalogFamilyFilter').addEventListener('change',renderCatalogTable);
 // Help modal functions
 function openHelpModal(){
     $('helpModal').style.display='flex';
+    trapFocus($('helpModal'),$('helpBtn'),'Quick Reference');
 }
 function closeHelpModal(){
     $('helpModal').style.display='none';
+    releaseFocus();
 }
 $('helpBtn').addEventListener('click',openHelpModal);
 $('closeHelpBtn').addEventListener('click',closeHelpModal);
@@ -1605,10 +1610,12 @@ function openFeedbackModal(){
     $('feedbackSubmitBtn').disabled=false;
     $('feedbackSubmitBtn').textContent='Send Feedback';
     $('feedbackModal').style.display='flex';
+    trapFocus($('feedbackModal'),$('feedbackBtn'),'Send Feedback');
 }
 
 function closeFeedbackModal(){
     $('feedbackModal').style.display='none';
+    releaseFocus();
 }
 
 function handleFeedbackTypeChange(){
@@ -1677,10 +1684,12 @@ function showDonateModal(){
     const count=flights.length;
     $('donateStats').innerHTML=`You just converted <strong>${count} flight${count!==1?'s':''}</strong> in seconds.`;
     $('donateModal').style.display='flex';
+    trapFocus($('donateModal'),null,'Your logbook is ready');
 }
 
 function closeDonateModal(){
     $('donateModal').style.display='none';
+    releaseFocus();
 }
 
 $('donateDismiss').addEventListener('click',closeDonateModal);
@@ -2926,15 +2935,53 @@ function openSummaryModal(){
     if(!flights.length){showStatus('No flights to summarize.','warning');return}
     renderSummaryCharts();
     $('summaryModal').style.display='flex';
+    trapFocus($('summaryModal'),$('summaryBtn'),'Flight Summary');
 }
 
 function closeSummaryModal(){
     $('summaryModal').style.display='none';
+    releaseFocus();
 }
 
 $('summaryBtn').addEventListener('click',openSummaryModal);
 $('closeSummaryBtn').addEventListener('click',closeSummaryModal);
 $('summaryModal').addEventListener('click',e=>{if(e.target===$('summaryModal'))closeSummaryModal()});
+
+// "Got a tool idea?" footer link — opens feedback modal pre-set to Suggest a New Tool
+$('suggestToolBtn').addEventListener('click',e=>{
+    e.preventDefault();
+    openFeedbackModal();
+    $('feedbackType').value='Suggest a New Tool';
+    handleFeedbackTypeChange();
+});
+
+// ==================== MODAL FOCUS TRAP ====================
+let _focusTrap=null;
+const FOCUSABLE='button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+function trapFocus(overlayEl,triggerEl,labelText){
+    const modal=overlayEl.querySelector('.modal')||overlayEl;
+    modal.setAttribute('role','dialog');
+    modal.setAttribute('aria-modal','true');
+    if(labelText)modal.setAttribute('aria-label',labelText);
+    const els=[...modal.querySelectorAll(FOCUSABLE)];
+    if(!els.length)return;
+    function onKey(e){
+        if(e.key!=='Tab')return;
+        const first=els[0],last=els[els.length-1];
+        if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus()}}
+        else{if(document.activeElement===last){e.preventDefault();first.focus()}}
+    }
+    overlayEl.addEventListener('keydown',onKey);
+    _focusTrap={overlayEl,onKey,triggerEl};
+    els[0].focus();
+}
+function releaseFocus(){
+    if(!_focusTrap)return;
+    _focusTrap.overlayEl.removeEventListener('keydown',_focusTrap.onKey);
+    try{if(_focusTrap.triggerEl)_focusTrap.triggerEl.focus()}catch(e){}
+    _focusTrap=null;
+}
+
 </script>
 </body>
 </html>
