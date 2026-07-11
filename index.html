@@ -409,7 +409,7 @@
                         <button class="btn btn-small btn-secondary" id="applyAllBtn">Apply to all</button>
                     </div>
                     <div class="pilot-detection" id="pilotDetection">
-                        <h4><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Detected Pilot</h4>
+                        <h4><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> <span id="pilotDetectionTitle">Detected Pilot</span></h4>
                         <input type="text" id="pilotName" placeholder="Your name">
                         <div class="detected-info" id="detectedInfo"></div>
                     </div>
@@ -2063,7 +2063,9 @@ async function handleFiles(f){
     renderFileList();// Re-render with detected employers
     let maxCount=0;detectedPilot='';
     for(let name in pilotCounts)if(pilotCounts[name]>maxCount){maxCount=pilotCounts[name];detectedPilot=name}
-    if(detectedPilot){pilotDetection.classList.add('visible');pilotNameInput.value=detectedPilot;detectedInfo.textContent=`${maxCount}/${rawFlights.length} flights`}
+    pilotDetection.classList.add('visible');
+    if(detectedPilot){pilotNameInput.value=detectedPilot;$('pilotDetectionTitle').textContent='Detected Pilot';detectedInfo.textContent=`${maxCount}/${rawFlights.length} flights`}
+    else{$('pilotDetectionTitle').textContent='Your Name';detectedInfo.textContent='Enter your name so your flights can be identified';}
     processBtn.disabled=!files.length;
     if(files.length)uploadZone.classList.add('has-file');
     // Show appropriate message
