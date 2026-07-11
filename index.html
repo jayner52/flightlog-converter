@@ -459,14 +459,14 @@
                     </div>
                     <div class="setting-group small">
                         <label>&nbsp;</label>
-                        <div class="toggle-group">
+                        <div class="toggle-group" title="Controls how your name appears in PIC/SIC columns in the export: 'Self' (generic) or your actual name">
                             <span class="toggle-label">Self</span>
-                            <div class="toggle" id="selfToggle"></div>
+                            <div class="toggle" id="selfToggle" role="switch" aria-checked="false" aria-label="Display name as: Self or your actual name" tabindex="0"></div>
                             <span class="toggle-label">Name</span>
                         </div>
                     </div>
                 </div>
-                <div id="statusMessage"></div>
+                <div id="statusMessage" aria-live="polite" aria-atomic="true"></div>
                 <div class="btn-row">
                     <button class="btn btn-primary" id="processBtn" disabled>Process →</button>
                     <button class="btn btn-primary hidden" id="manualStartBtn">Start →</button>
@@ -763,6 +763,7 @@
     </div>
 <script>
 const STORAGE_KEY='flightlog_prefs';
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 // Undo stack
 const undoStack = [];
@@ -1410,7 +1411,7 @@ function loadPrefs(){
     try{
         const p=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
         if(p.employer)employer.value=p.employer;
-        if(p.showSelf!==undefined){showSelf=p.showSelf;selfToggle.classList.toggle('active',!showSelf)}
+        if(p.showSelf!==undefined){showSelf=p.showSelf;selfToggle.classList.toggle('active',!showSelf);selfToggle.setAttribute('aria-checked',String(!showSelf))}
         if(p.hiddenCols)hiddenCols=new Set(p.hiddenCols);
         if(p.optFields)optFields=p.optFields;
         if(p.customLabels)customLabels=p.customLabels;
@@ -1458,7 +1459,9 @@ $('applyAllBtn').addEventListener('click',()=>{
 updateCatalogVisibility();// Initial check
 
 // Toggle: active (right/blue) = show full Name, inactive (left) = show Self
-selfToggle.addEventListener('click',()=>{showSelf=!showSelf;selfToggle.classList.toggle('active',!showSelf);savePrefs();if(flights.length)renderTable()});
+function toggleSelf(){showSelf=!showSelf;selfToggle.classList.toggle('active',!showSelf);selfToggle.setAttribute('aria-checked',String(!showSelf));savePrefs();if(flights.length)renderTable()}
+selfToggle.addEventListener('click',toggleSelf);
+selfToggle.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();toggleSelf()}});
 
 uploadZone.addEventListener('click',e=>{if(e.target!==fileInput)fileInput.click()});
 uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
@@ -1699,9 +1702,18 @@ document.addEventListener('click',()=>colDropdown.classList.remove('open'));
 
 // Global keyboard shortcuts
 document.addEventListener('keydown',e=>{
+    // Escape: close any open modal
+    if(e.key==='Escape'){
+        if($('catalogModal').style.display!=='none'){closeCatalogModal();return}
+        if($('feedbackModal').style.display!=='none'){closeFeedbackModal();return}
+        if($('helpModal').style.display!=='none'){closeHelpModal();return}
+        if($('donateModal').style.display!=='none'){closeDonateModal();return}
+        if($('summaryModal').style.display!=='none'){closeSummaryModal();return}
+    }
+
     const inInput=document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='checkbox';
     const cols=getVisibleCols();
-    
+
     // Ctrl+Z: Undo
     if(e.ctrlKey&&e.key==='z'&&!e.shiftKey){
         e.preventDefault();
@@ -2093,26 +2105,38 @@ function renderFileList(){
         const fu=fileUploads[i];
         const needsInput=fu&&fu.needsInput&&!fu.employer;
         const itemClass=needsInput?'file-item file-item-needs-input':'file-item';
-        let html=`<div class="${itemClass}"><div class="file-item-employer"><span><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${f.name}</span>`;
+        let html=`<div class="${itemClass}"><div class="file-item-employer"><span><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${esc(f.name)}</span>`;
         // Show employer input when multiple files or detection happened
         if(showEmployerInputs&&fu){
             const autoBadge=fu.autoDetected?'<span class="auto-badge" title="Detected from aircraft data - you can change it">✓ Detected</span>':'';
             const inputClass=needsInput?'file-employer-input needs-input':'file-employer-input';
             const placeholder=needsInput?'Enter employer...':'Employer...';
-            html+=`<input type="text" list="employerList" data-file-idx="${i}" class="${inputClass}" value="${fu.employer||''}" placeholder="${placeholder}">${autoBadge}`;
+            html+=`<input type="text" list="employerList" data-file-idx="${i}" class="${inputClass}" value="${esc(fu.employer||'')}" placeholder="${placeholder}">${autoBadge}`;
         }
         html+=`</div><button data-idx="${i}"><svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`;
         return html;
     }).join('');
-    fileList.querySelectorAll('button[data-idx]').forEach(btn=>btn.onclick=e=>{
+    fileList.querySelectorAll('button[data-idx]').forEach(btn=>btn.onclick=async e=>{
         const idx=parseInt(btn.dataset.idx);
         files.splice(idx,1);
         fileUploads.splice(idx,1);
         // Update sourceIdx for remaining uploads
         fileUploads.forEach((fu,i)=>fu.sourceIdx=i);
-        renderFileList();
         processBtn.disabled=!files.length;
-        if(!files.length){uploadZone.classList.remove('has-file');pilotDetection.classList.remove('visible');rawFlights=[]}
+        if(!files.length){
+            rawFlights=[];pilotCounts={};
+            uploadZone.classList.remove('has-file');
+            pilotDetection.classList.remove('visible');
+        }else{
+            // Re-parse remaining files so rawFlights doesn't include the removed file's flights
+            rawFlights=[];pilotCounts={};
+            for(let i=0;i<files.length;i++){const c=await readFile(files[i]);parseAirCanadaPQRM(c,i,null);}
+            let maxCount=0;detectedPilot='';
+            for(const n in pilotCounts)if(pilotCounts[n]>maxCount){maxCount=pilotCounts[n];detectedPilot=n}
+            if(detectedPilot){pilotNameInput.value=detectedPilot;$('pilotDetectionTitle').textContent='Detected Pilot';detectedInfo.textContent=`${maxCount}/${rawFlights.length} flights`}
+            else{$('pilotDetectionTitle').textContent='Your Name';detectedInfo.textContent='Enter your name so your flights can be identified';}
+        }
+        renderFileList();
     });
     fileList.querySelectorAll('.file-employer-input').forEach(inp=>{
         inp.onchange=e=>{
@@ -2142,6 +2166,11 @@ function renderFileList(){
 }
 function readFile(f){return new Promise(r=>{const x=new FileReader();x.onload=e=>r(e.target.result);x.readAsText(f)})}
 function parseAirCanadaPQRM(c,sourceFileIdx=0,finsArray=null){
+    // Detect binary Excel files: xlsx = PK zip signature, xls = OLE2 magic bytes
+    if(c.startsWith('PK')||c.charCodeAt(0)===0xD0&&c.charCodeAt(1)===0xCF){
+        showStatus('One of your files appears to be a binary Excel file. In Excel: File → Save As → "Text (Tab delimited) (*.txt)", then upload that file instead.','error');
+        return;
+    }
     const lines=c.split(/\r?\n/);let hdr=-1;
     for(let i=0;i<Math.min(10,lines.length);i++)if(lines[i].includes('Date')&&lines[i].includes('Type')){hdr=i;break}
     if(hdr===-1)return;
@@ -2408,7 +2437,7 @@ function renderCell(f,c,i,isSelected){
         extra+='<span class="jazz-badge" title="Auto-detected from aircraft fin">Auto</span>';
     }
     const optAttr=c.isOpt?'data-opt="1"':'data-opt="0"';
-    return `<td class="${cls}${selClass}"><span class="editable" data-i="${i}" data-k="${c.k}" data-t="${c.t}" ${optAttr}>${displayVal||'&nbsp;'}</span>${extra}</td>`;
+    return `<td class="${cls}${selClass}"><span class="editable" data-i="${i}" data-k="${c.k}" data-t="${c.t}" ${optAttr}>${displayVal!=null&&displayVal!==''?esc(displayVal):'&nbsp;'}</span>${extra}</td>`;
 }
 
 function startEdit(el,i,k,t,isOpt){
